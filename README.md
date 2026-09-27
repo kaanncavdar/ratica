@@ -3,9 +3,10 @@
 </p>
 
 <h1 align="center">Ratica</h1>
+<p align="center"><b>Offline AI PDF translator that keeps the original page layout</b></p>
 
 <p align="center">
-  <b>Translate PDF books on your own computer, and keep the original page layout.</b><br>
+  Translate PDF books on your own computer.<br>
   Free, open source and private: no cloud, no account, no API key. Windows · macOS · Linux.
 </p>
 
@@ -25,6 +26,22 @@ Ratica is an offline **PDF book translator**. It reads a PDF, translates it para
 > **Status: beta.** Ratica works end to end, but it is young: expect rough edges and please [report them](https://github.com/kaanncavdar/ratica/issues).
 
 ![An original page and Ratica's Turkish translation side by side](docs/images/before-after.png)
+
+## Why Ratica?
+
+Most PDF translators are cloud services: you upload your document, wait, and often get back plain text that
+has lost its layout. Ratica is a **local PDF translator** instead. It runs entirely on your own computer with a
+local AI model, so it works offline and your files stay private.
+
+- **Layout-preserving PDF translation:** the translated book looks like the original, page by page.
+- **Private by design:** no cloud, no account, no API key, no file uploads.
+- **Made for long documents:** books, textbooks, manuals and technical documents of hundreds of pages;
+  you can pause and resume.
+- **PDF and EPUB output:** read the translation as the original pages or on an e-reader.
+- **Free and open source** on Windows, macOS and Linux.
+
+Translate English PDFs to Turkish, Spanish, German, French, Japanese, Chinese and 20+ other languages, or
+between any two of them.
 
 ## Install
 
