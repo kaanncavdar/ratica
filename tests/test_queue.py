@@ -154,3 +154,11 @@ def test_progress_is_reported(tmp_path):
     translate_book(make_book("a", "b"), JobStore(tmp_path / "job.sqlite"), Recorder(),
                    on_progress=lambda done, total: seen.append((done, total)))
     assert seen[-1] == (2, 2)
+
+
+def test_quotation_marks_around_the_source_are_kept():
+    from ratica.queue import _clean
+    assert _clean("“Simple ideas last.”", "Basit fikirler kalıcıdır.") == "“Basit fikirler kalıcıdır.”"
+    assert _clean("“Hash Tables” is a short guide.", "“Hash Tabloları” kısa bir rehberdir.") == \
+        "“Hash Tabloları” kısa bir rehberdir."
+    assert _clean("Plain text.", "Düz metin.") == "Düz metin."

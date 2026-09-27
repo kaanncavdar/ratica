@@ -239,27 +239,245 @@ def test_a_margin_label_on_the_first_line_is_its_own_block(tmp_path):
     page = doc.new_page()
     tw = pymupdf.TextWriter(page.rect)
     tw.append((72, 100), "Example", font=pymupdf.Font("hebo"), fontsize=10)
-    tw.append((140, 100), "Assume a disk subsystem with the following", font=pymupdf.Font("tiro"), fontsize=10)
-    tw.append((140, 112), "components and MTTF values.", font=pymupdf.Font("tiro"), fontsize=10)
+    tw.append((140, 100), "Assume a small cache with the following", font=pymupdf.Font("tiro"), fontsize=10)
+    tw.append((140, 112), "sizes and hit rates.", font=pymupdf.Font("tiro"), fontsize=10)
     tw.write_text(page)
     doc.save(tmp_path / "label.pdf")
     texts = [b.text for b in extract(tmp_path / "label.pdf").blocks]
     assert "Example" in texts
-    assert "Assume a disk subsystem with the following components and MTTF values." in texts
+    assert "Assume a small cache with the following sizes and hit rates." in texts
 
 
 def test_a_single_line_with_wide_gaps_splits_into_pieces(tmp_path):
     doc = pymupdf.open()
     page = doc.new_page()
     tw = pymupdf.TextWriter(page.rect)
-    for x, label in ((80, "Dell 630 cluster watts/node"), (260, "Dell 630 44 cores watts"),
-                     (420, "Dell 730 44 cores watts")):
+    for x, label in ((80, "Model A cluster watts/node"), (260, "Model A 8 cores watts"),
+                     (420, "Model B 8 cores watts")):
         tw.append((x, 100), label, font=pymupdf.Font("helv"), fontsize=8)
     tw.write_text(page)
     doc.save(tmp_path / "legend.pdf")
     texts = [b.text for b in extract(tmp_path / "legend.pdf").blocks]
-    assert texts == ["Dell 630 cluster watts/node", "Dell 630 44 cores watts", "Dell 730 44 cores watts"]
+    assert texts == ["Model A cluster watts/node", "Model A 8 cores watts", "Model B 8 cores watts"]
 
 
 def test_block_ids_are_stable_across_runs(book_pdf):
     assert [b.id for b in extract(book_pdf).blocks] == [b.id for b in extract(book_pdf).blocks]
+
+
+def _write_rows(path, rows):
+    """rows: list of (y, [(x, text, font), ...]) written with one TextWriter, so PyMuPDF sees one block."""
+    doc = pymupdf.open()
+    page = doc.new_page()
+    tw = pymupdf.TextWriter(page.rect)
+    for y, cells in rows:
+        for x, text, font in cells:
+            tw.append((x, y), text, font=pymupdf.Font(font), fontsize=10)
+    tw.write_text(page)
+    doc.save(path)
+    return path
+
+
+def test_contents_rows_become_one_block_per_cell(tmp_path):
+    pdf = _write_rows(tmp_path / "toc.pdf", [
+        (100, [(100, "A.1", "hebo"), (130, "Introduction", "helv"), (455, "A-2", "helv")]),
+        (114, [(100, "A.2", "hebo"), (130, "Resizing a Hash Table While Readers", "helv"), (455, "A-3", "helv")]),
+        (128, [(130, "Keep Working", "helv"), (455, "A-9", "helv")]),
+    ])
+    blocks = extract(pdf).blocks
+    texts = [b.text for b in blocks if b.translatable]
+    assert texts == ["Introduction", "Resizing a Hash Table While Readers Keep Working"]
+    assert {b.text for b in blocks if not b.translatable} == {"A.1", "A.2", "A-2", "A-3", "A-9"}
+
+
+def test_a_wrapped_cell_continues_on_the_next_row(tmp_path):
+    pdf = _write_rows(tmp_path / "wrap.pdf", [
+        (100, [(100, "Appendix C", "helv"), (170, "Resizing a hash table while", "hebo")]),
+        (114, [(170, "readers keep working", "hebo")]),
+        (128, [(170, "by Ada Writer", "heit")]),
+    ])
+    texts = [b.text for b in extract(pdf).blocks if b.translatable]
+    assert texts == ["Appendix C", "Resizing a hash table while readers keep working", "by Ada Writer"]
+
+
+def test_words_in_separate_spans_keep_their_spaces(tmp_path):
+    pdf = _write_rows(tmp_path / "sp.pdf", [(100, [(100, "Instruction", "helv"), (148, "Set", "helv")])])
+    assert extract(pdf).blocks[0].text == "Instruction Set"
+
+
+def test_a_line_in_another_style_is_not_joined_to_the_block_above(tmp_path):
+    pdf = _write_rows(tmp_path / "by.pdf", [(100, [(100, "Hash Functions", "hebo")]),
+                                            (130, [(100, "by Ada Writer", "heit")])])
+    assert [b.text for b in extract(pdf).blocks] == ["Hash Functions", "by Ada Writer"]
+
+
+def test_first_line_indent_starts_a_new_paragraph(tmp_path):
+    pdf = _write_rows(tmp_path / "ind.pdf", [
+        (100, [(84, "Chapter 3 explains how hash tables grow when", "tiro")]),
+        (112, [(72, "they fill up here.", "tiro")]),
+        (124, [(84, "Chapter 4 covers sorting algorithms and", "tiro")]),
+        (136, [(72, "their typical running times.", "tiro")]),
+    ])
+    blocks = extract(pdf).blocks
+    assert [b.text for b in blocks] == ["Chapter 3 explains how hash tables grow when they fill up here.",
+                                        "Chapter 4 covers sorting algorithms and their typical running times."]
+    assert 10 < blocks[0].parts[0].indent < 14
+
+
+def test_bullet_glyph_in_its_own_span_stays_outside_the_item_box(tmp_path):
+    doc = pymupdf.open()
+    page = doc.new_page()
+    page.insert_font(fontname="notos", fontbuffer=pymupdf.Font("notos").buffer)
+    page.insert_text((100, 100), "•", fontname="notos", fontsize=10)
+    page.insert_text((114, 100), "Hash Tables: Chapter 2 and Chapter 5", fontname="helv", fontsize=10)
+    doc.save(tmp_path / "bullet.pdf")
+    item = next(b for b in extract(tmp_path / "bullet.pdf").blocks if b.translatable)
+    assert item.kind == "item" and item.text == "Hash Tables: Chapter 2 and Chapter 5"
+    assert item.parts[0].rect[0] >= 113 and not item.parts[0].marker_in_box
+
+
+def test_page_references_and_symbols_are_not_translated(tmp_path):
+    pdf = _write_rows(tmp_path / "hdr.pdf", [(100, [(38, "xiv", "hebo"), (61, "■", "helv"), (76, "Contents", "helv")])])
+    blocks = extract(pdf).blocks
+    assert [b.text for b in blocks if b.translatable] == ["Contents"]
+
+
+def test_font_shape_decides_serif_and_bold_when_the_name_says_nothing(tmp_path):
+    from ratica.extract import font_shapes
+    doc = pymupdf.open()
+    page = doc.new_page()
+    for n, (alias, font) in enumerate((("fa", "tiro"), ("fb", "helv"), ("fc", "hebo"))):
+        page.insert_font(fontname=alias, fontbuffer=pymupdf.Font(font).buffer)
+        page.insert_text((72, 100 + 20 * n), "Hello world", fontname=alias, fontsize=11)
+    doc.save(tmp_path / "shapes.pdf")
+    doc = pymupdf.open(tmp_path / "shapes.pdf")
+    names = {f[3].split("+")[-1]: f[3] for f in doc.get_page_fonts(0)}
+    shapes = font_shapes(doc)
+    by_look = sorted(shapes[n] for n in names)
+    assert by_look == [(False, False), (False, True), (True, False)]
+
+
+def test_obfuscated_font_names_still_tell_bold_and_italic():
+    from ratica.extract import looks_bold, looks_italic
+    assert looks_bold("AdvOT3b30f6db.B", flags=4)
+    assert looks_italic("AdvOTc0286d31.I", flags=4)
+    assert not looks_bold("AdvOTab62ddd1+20", flags=4)
+
+
+def test_an_accent_drawn_as_its_own_glyph_is_dropped():
+    from ratica.extract import drop_accents
+
+    def span(x0, x1, text, font="AdvOTbody"):
+        return {"bbox": (x0, 100, x1, 110), "text": text, "font": font, "size": 10, "flags": 4, "color": 0,
+                "origin": (x0, 108)}
+    spans = [span(192, 315, "written by Ada Writer and Ren"), span(314, 320, "", "AdvP4C4E59"),
+             span(315, 319, "e"), span(319, 323, " "), span(323, 349, "Example")]
+    assert "".join(s["text"] for s in drop_accents(spans)) == "written by Ada Writer and Rene Example"
+    lone = [span(100, 140, "x "), span(141, 147, "", "AdvP4C4E59"), span(149, 160, " y")]
+    assert len(drop_accents(lone)) == 3  # not over a letter: a real symbol
+
+
+def test_a_title_wrapped_onto_a_row_with_a_page_number_continues(tmp_path):
+    pdf = _write_rows(tmp_path / "wrap2.pdf", [
+        (100, [(100, "C.5", "hebo"), (130, "Resizing a Hash Table While Readers", "helv")]),
+        (114, [(130, "Keep Working", "helv"), (455, "C-45", "helv")]),
+    ])
+    texts = [b.text for b in extract(pdf).blocks if b.translatable]
+    assert texts == ["Resizing a Hash Table While Readers Keep Working"]
+
+
+def test_a_font_used_mostly_for_numbers_is_not_a_math_font():
+    from ratica.extract import symbolic_fonts
+    spans = [("AdvOTnum", "A.1"), ("AdvOTnum", "1.10"), ("AdvOTnum", "2.3"), ("AdvOTnum", "Appendix D")]
+    assert symbolic_fonts(spans) == set()
+
+
+def test_a_symbol_with_no_character_code_is_recognised_by_its_shape(tmp_path):
+    from ratica.extract import identify_glyph
+    doc = pymupdf.open()
+    page = doc.new_page()
+    page.insert_text((100, 100), "×", fontname="tiro", fontsize=10)
+    span = {"bbox": tuple(pymupdf.Rect(99, 90, 108, 102)), "font": "AdvP4C4E74", "text": "\x01"}
+    assert identify_glyph(page, span) == "×"
+    blank = {"bbox": (300, 300, 308, 310), "font": "AdvP4C4E74", "text": "\x02"}
+    assert identify_glyph(page, blank) is None
+
+
+def test_a_recognised_symbol_in_a_sentence_keeps_the_sentence_translatable(tmp_path, monkeypatch):
+    import ratica.extract as ex
+    monkeypatch.setattr(ex, "identify_glyph", lambda page, span: "×")
+    doc = pymupdf.open()
+    page = doc.new_page()
+    tiro, helv = pymupdf.Font("tiro"), pymupdf.Font("helv")  # helv sets only the unreadable sign here
+    for y, parts in ((100, ("In our small test we filled a grid of 4", "¼", "4 cells before we sorted the rows.")),
+                     (200, ("a", "¼", "b"))):
+        tw = pymupdf.TextWriter(page.rect)
+        x = tw.append((72, y), parts[0], font=tiro, fontsize=10)[1].x
+        x = tw.append((x, y), parts[1], font=helv, fontsize=10)[1].x
+        tw.append((x, y), parts[2], font=tiro, fontsize=10)
+        tw.write_text(page)
+    doc.save(tmp_path / "x.pdf")
+    kinds = [(b.kind, b.text) for b in extract(tmp_path / "x.pdf").blocks]
+    assert ("paragraph", "In our small test we filled a grid of 4×4 cells before we sorted the rows.") in kinds
+    assert ("formula", "a×b") in kinds  # too short to be a sentence: an equation
+
+
+def test_a_short_title_is_not_continued_by_the_next_row(tmp_path):
+    pdf = _write_rows(tmp_path / "toc2.pdf", [
+        (100, [(100, "A.1", "hebo"), (130, "A Worked Example: Building a Small Cache Library", "helv"),
+               (455, "A-33", "helv")]),
+        (114, [(100, "A.2", "hebo"), (130, "Further Reading and Notes", "helv"), (455, "A-47", "helv")]),
+        (128, [(130, "Exercises by Ada Writer", "helv"), (455, "A-47", "helv")]),
+    ])
+    texts = [b.text for b in extract(pdf).blocks if b.translatable]
+    assert texts[-2:] == ["Further Reading and Notes", "Exercises by Ada Writer"]
+
+
+def test_mixed_styles_use_the_plain_style_unless_nearly_all_text_has_it(tmp_path):
+    doc = pymupdf.open()
+    page = doc.new_page()
+    tw = pymupdf.TextWriter(page.rect)
+    x = tw.append((72, 100), "Sorting Basics:", font=pymupdf.Font("tiit"), fontsize=10)[1].x
+    tw.append((x, 100), " Chapter 3", font=pymupdf.Font("tiro"), fontsize=10)
+    tw.write_text(page)
+    doc.save(tmp_path / "mixed.pdf")
+    part = extract(tmp_path / "mixed.pdf").blocks[0].parts[0]
+    assert not part.italic
+
+
+def test_ragged_paragraphs_are_not_marked_justified(tmp_path):
+    pdf = _write_rows(tmp_path / "rag.pdf", [
+        (100, [(72, "New information and communications technologies, in particular", "helv")]),
+        (112, [(72, "high-speed Internet, are changing the way", "helv")]),
+        (124, [(72, "companies do business and deliver public services.", "helv")]),
+    ])
+    assert not extract(pdf).blocks[0].parts[0].justified
+
+
+def test_subscripts_do_not_decide_the_font_size_and_make_a_formula(tmp_path):
+    doc = pymupdf.open()
+    page = doc.new_page()
+    tw = pymupdf.TextWriter(page.rect)
+    x = tw.append((90, 200), "Power", font=pymupdf.Font("tiit"), fontsize=10)[1].x
+    tw.append((x, 203), "dynamic", font=pymupdf.Font("tiit"), fontsize=7)
+    tw.write_text(page)
+    doc.save(tmp_path / "sub.pdf")
+    block = extract(tmp_path / "sub.pdf").blocks[0]
+    assert block.kind == "formula" and block.parts[0].size == 10
+
+
+def test_straight_quotes_become_curly_when_the_source_uses_curly_ones():
+    from ratica.queue import _clean
+    assert _clean("“A classic” he said.", '"Bir klasik" dedi.') == "“Bir klasik” dedi."
+    assert _clean('"Plain" quotes.', '"Düz" tırnak.') == '"Düz" tırnak.'
+
+
+def test_two_rows_split_by_a_bar_of_dashes_are_a_formula(tmp_path):
+    doc = pymupdf.open()
+    page = doc.new_page()
+    tw = pymupdf.TextWriter(page.rect)
+    for y, x, text in ((450, 370, "Bytes Read From Disk"), (456, 368, "-" * 30), (462, 375, "Bytes Requested")):
+        tw.append((x, y), text, font=pymupdf.Font("tiro"), fontsize=8)
+    tw.write_text(page)
+    doc.save(tmp_path / "frac.pdf")
+    assert {b.kind for b in extract(tmp_path / "frac.pdf").blocks} == {"formula"}

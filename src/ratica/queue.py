@@ -82,10 +82,24 @@ def looks_like_translation(src: str, out: str) -> bool:
     return len(out) <= MAX_GROWTH * len(src) + 40
 
 
+OPENING_QUOTES, CLOSING_QUOTES = "“\"‘«„", "”\"’»“"
+
+
 def _clean(src: str, out: str) -> str:
-    """Drop Markdown bold markers the model added on its own."""
+    """Drop Markdown bold markers the model added on its own, and put back quotation marks that
+    enclosed the whole source but were lost."""
     out = out.strip()
-    return out.replace("**", "") if "**" not in src else out
+    if "**" not in src:
+        out = out.replace("**", "")
+    src = src.strip()
+    if "“" in src and '"' in out and "“" not in out:  # the model wrote straight quotes: use the book's
+        parts = out.split('"')
+        out = "".join(p + ("“" if i % 2 == 0 else "”") for i, p in enumerate(parts[:-1])) + parts[-1]
+    if src[:1] in OPENING_QUOTES and out and out[0] not in OPENING_QUOTES:
+        out = src[0] + out
+    if src[-1:] in CLOSING_QUOTES and out and out[-1] not in CLOSING_QUOTES:
+        out = out + src[-1]
+    return out
 
 
 def _translate_one(src: str, translate, keep_terms) -> tuple[str, str]:

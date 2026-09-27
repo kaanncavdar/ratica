@@ -3,7 +3,7 @@ import hashlib
 from dataclasses import dataclass, field
 
 TRANSLATABLE = {"heading", "paragraph", "item", "header"}
-ONLY_IN_PAGE_LAYOUT = {"header", "figure"}  # running headers and figure text make no sense in a reflowed book
+ONLY_IN_PAGE_LAYOUT = {"header", "figure", "mark"}  # running headers, figure text and page references
 
 
 def text_hash(text: str) -> str:
@@ -22,12 +22,16 @@ class Part:
     color: int = 0  # sRGB as 0xRRGGBB
     chars: int = 0  # length of the source text in this part, to split the translation back
     lines: int = 1
+    indent: float = 0  # first-line indent, in points
+    ascent: float = 0  # distance from the box top to the first baseline, in points (0 = unknown)
+    justified: bool = True  # lines end flush at the right (checked for paragraphs of 3+ lines)
+    marker_in_box: bool = True  # False when a list marker is drawn apart from the text and stays as it is
 
 
 @dataclass
 class Block:
     id: str
-    kind: str  # "heading" | "paragraph" | "item" | "header" | "code" | "formula" | "figure" | "image"
+    kind: str  # "heading" | "paragraph" | "item" | "header" | "code" | "formula" | "figure" | "mark" | "image"
     text: str
     page: int  # 1-based page number in the source PDF
     level: int = 0  # heading level, 1 = largest

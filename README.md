@@ -80,8 +80,10 @@ Everything runs locally. Ratica only goes online to download the engine and the 
 - Scanned PDFs (pages that are images) are not translated yet; OCR is planned.
 - Text inside images stays in the original language.
 - Formulas are kept exactly as they are, so a sentence that is part of a formula stays in the original language.
-- Running page headers and footers stay in the original language.
-- When a paragraph mixes bold and regular text, the translation uses one style for the whole paragraph.
+- Pages rotated sideways (wide tables) stay in the original language.
+- When a paragraph mixes styles (an italic phrase, a coloured link), the translation uses the paragraph's main
+  style for all of it.
+- If a translation cannot fit its place on the page at a readable size, that text keeps the original.
 - The app window is in English for now.
 
 ## Roadmap

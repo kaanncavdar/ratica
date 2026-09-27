@@ -200,11 +200,11 @@ def test_indented_items_may_grow_to_the_column_edge_of_the_text_above(tmp_path):
     page = doc.new_page()
     page.insert_textbox(pymupdf.Rect(72, 72, 520, 120), LONG_EN, fontname="tiro", fontsize=11)
     for i, y in enumerate((140, 154, 168)):
-        page.insert_text((130, y), f"{i + 1} disk, rated at 1,000,000 hours", fontname="tiro", fontsize=11)
+        page.insert_text((130, y), f"{i + 1} table, sized at 1,000,000 slots", fontname="tiro", fontsize=11)
     doc.save(tmp_path / "items.pdf")
     book = extract(tmp_path / "items.pdf")
-    first = next(b for b in book.blocks if b.text.startswith("1 disk"))
-    tr = {first.id: "1 disk, her biri 1.000.000 saat arızalar arası ortalama süre ile derecelendirilmiş"}
+    first = next(b for b in book.blocks if b.text.startswith("1 table"))
+    tr = {first.id: "1 tablo, her biri 1.000.000 yuva kapasitesiyle ayrı ayrı boyutlandırılmış ve derecelendirilmiş"}
     out = pymupdf.open(write_layout_pdf(book, tr, tmp_path / "out.pdf"))[0]
     sizes = _sizes(out, "derecelendirilmiş")
     assert sizes and min(sizes) >= 10.8
@@ -230,3 +230,97 @@ def test_a_paragraph_split_across_pages_is_written_back_on_both(tmp_path):
     out = pymupdf.open(write_layout_pdf(book, tr, tmp_path / "out.pdf"))
     assert out[0].get_text().strip() and out[1].get_text().strip()
     assert "first part" not in out[0].get_text()
+
+
+def test_a_single_line_keeps_the_top_of_its_original_line(tmp_path):
+    doc = pymupdf.open()
+    page = doc.new_page()
+    page.insert_text((150, 100), "Introduction", fontname="helv", fontsize=10)
+    doc.save(tmp_path / "one.pdf")
+    book = extract(tmp_path / "one.pdf")
+    out = write_layout_pdf(book, {book.blocks[0].id: "Giriş bölümü"}, tmp_path / "out.pdf")
+    before = pymupdf.open(tmp_path / "one.pdf")[0].search_for("Introduction")[0]
+    after = pymupdf.open(out)[0].search_for("Giriş")[0]
+    assert abs(after.y1 - before.y1) < 1.0
+
+
+def test_a_right_aligned_label_grows_to_the_left(tmp_path):
+    doc = pymupdf.open()
+    page = doc.new_page()
+    tw = pymupdf.TextWriter(page.rect)
+    tw.append((431, 40), "Contents", font=pymupdf.Font("tiro"), fontsize=10)
+    tw.append((477, 40), "|", font=pymupdf.Font("helv"), fontsize=10)
+    tw.append((491, 40), "xv", font=pymupdf.Font("hebo"), fontsize=10)
+    tw.write_text(page)
+    doc.save(tmp_path / "hdr.pdf")
+    book = extract(tmp_path / "hdr.pdf")
+    label = next(b for b in book.blocks if b.text == "Contents")
+    out = write_layout_pdf(book, {label.id: "İçindekiler Listesi"}, tmp_path / "out.pdf")
+    spans = [s for b in pymupdf.open(out)[0].get_text("dict")["blocks"] for l in b.get("lines", [])
+             for s in l["spans"] if "İçindekiler" in s["text"]]
+    assert spans and spans[0]["size"] > 9.5
+    assert spans[0]["bbox"][2] < 477
+
+
+def test_the_translation_sits_on_the_original_baseline(tmp_path):
+    doc = pymupdf.open()
+    page = doc.new_page()
+    page.insert_font(fontname="notos", fontbuffer=pymupdf.Font("notos").buffer)  # tall ascender, like many books
+    page.insert_text((150, 100), "Introduction", fontname="notos", fontsize=10)
+    doc.save(tmp_path / "one.pdf")
+    book = extract(tmp_path / "one.pdf")
+    out = write_layout_pdf(book, {book.blocks[0].id: "Giriş"}, tmp_path / "out.pdf")
+    spans = [s for b in pymupdf.open(out)[0].get_text("dict")["blocks"] for l in b.get("lines", [])
+             for s in l["spans"] if "Giriş" in s["text"]]
+    assert abs(spans[0]["origin"][1] - 100) < 0.5
+
+
+def test_a_paragraph_does_not_widen_to_the_edge_of_a_much_larger_title(tmp_path):
+    doc = pymupdf.open()
+    page = doc.new_page()
+    page.insert_text((255, 100), "Hash Tables in Practice", fontname="helv", fontsize=24)
+    page.insert_textbox(pymupdf.Rect(255, 200, 450, 260), LONG_EN, fontname="helv", fontsize=10)
+    doc.save(tmp_path / "title.pdf")
+    book = extract(tmp_path / "title.pdf")
+    para = next(b for b in book.blocks if b.text == LONG_EN)
+    out = pymupdf.open(write_layout_pdf(book, {para.id: LONG_TR}, tmp_path / "out.pdf"))[0]
+    hits = [r for w in ("tabloları", "fonksiyonu", "ortalama") for r in out.search_for(w)]
+    assert hits and max(r.x1 for r in hits) <= 452
+
+
+def test_a_single_line_grows_right_into_free_space_instead_of_wrapping(tmp_path):
+    doc = pymupdf.open()
+    page = doc.new_page()
+    page.insert_text((350, 300), "A Sample Source, May 3, 2021", fontname="helv", fontsize=10)
+    doc.save(tmp_path / "attr.pdf")
+    book = extract(tmp_path / "attr.pdf")
+    out = pymupdf.open(write_layout_pdf(book, {book.blocks[0].id: "Örnek Kaynak, 3 Mayıs 2021 günü"},
+                                        tmp_path / "out.pdf"))[0]
+    lines = [l for b in out.get_text("dict")["blocks"] for l in b.get("lines", [])]
+    assert len(lines) == 1 and lines[0]["spans"][0]["size"] > 9.5
+
+
+def test_a_single_line_is_not_shrunk_to_match_paragraphs(monkeypatch):
+    from ratica import layout
+    from ratica.docmodel import Block, Part
+    need = {"long": 0.7, "short": 1.0, "line": 1.0}
+    monkeypatch.setattr(layout, "_needed_scale", lambda body, css, rect: need[body])
+    page = pymupdf.open().new_page()
+    items = [(Part(1, (72, 72 + 40 * n, 300, 100 + 40 * n), size=11, lines=lines), text, Block(f"b{n}", "paragraph", text, 1))
+             for n, (text, lines) in enumerate((("long", 3), ("short", 3), ("line", 1)))]
+    scales = {p.body: p.scale for p in layout._plan_page(page, items)}
+    assert scales == {"long": 0.7, "short": layout.EVEN_SCALE_FLOOR, "line": 1.0}
+
+
+def test_only_labels_on_the_right_of_the_page_grow_to_the_left(tmp_path):
+    doc = pymupdf.open()
+    page = doc.new_page()
+    tw = pymupdf.TextWriter(page.rect)
+    tw.append((89, 115), "A is k times larger than B: k =", font=pymupdf.Font("tiro"), fontsize=10)
+    tw.append((212, 115), "Size of A", font=pymupdf.Font("tiit"), fontsize=10)
+    tw.write_text(page)
+    doc.save(tmp_path / "left.pdf")
+    book = extract(tmp_path / "left.pdf")
+    label = next(b for b in book.blocks if b.text.startswith("A is"))
+    out = pymupdf.open(write_layout_pdf(book, {label.id: "A, B'den k kat daha büyüktür: k ="}, tmp_path / "o.pdf"))
+    assert out[0].search_for("büyüktür")[0].x0 > 88

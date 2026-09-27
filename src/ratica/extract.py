@@ -38,21 +38,97 @@ SANS_NAME = re.compile(r"sans|arial|helvet|avenir|frutiger|myriad|calibri|verdan
 SERIF_NAME = re.compile(r"serif|times|roman|garamond|georgia|minion|palatino|caslon|cambria|baskerville|bodoni|"
                         r"book ?antiqua|century|charter|charis|utopia|libertin|lucida ?bright|cmr\d|lmroman|"
                         r"nimbus ?rom|stix|sabon|plantin|janson|bembo|constantia", re.I)
-BOLD_NAME = re.compile(r"bold|black|heavy|semibold|demi|extrabold|ultra", re.I)
+BOLD_NAME = re.compile(r"bold|black|heavy|semibold|demi|extrabold|ultra|\.B$|\.BI$", re.I)
+ITALIC_NAME = re.compile(r"italic|oblique|\.I$|\.BI$", re.I)
+SUBSET = re.compile(r"^[A-Z]{6}\+")  # "ABCDEF+" marks an embedded subset of a font
 
 
-def looks_serif(font: str, flags: int) -> bool:
-    """PDF serif flags are often wrong; the font's name is a better hint when it has one."""
-    name = font.split("+")[-1]
+def _base_name(font: str) -> str:
+    return SUBSET.sub("", font)
+
+
+def _shape(font: str, shapes: dict | None):
+    """(serif, bold) measured from the glyphs, for fonts whose name is meaningless ("AdvOT3b30f6db")."""
+    if not shapes:
+        return None
+    name = _base_name(font)
+    return shapes.get(name) or shapes.get(re.sub(r"\+\d+$", "", name))  # "+20": an extra encoding of a font
+
+
+def looks_serif(font: str, flags: int, shapes: dict | None = None) -> bool:
+    """PDF serif flags are often wrong; the font's name, then its glyph shapes, are better hints."""
+    name = _base_name(font)
     if SANS_NAME.search(name):
         return False
     if SERIF_NAME.search(name):
         return True
-    return bool(flags & SERIF)
+    shape = _shape(font, shapes)
+    return shape[0] if shape else bool(flags & SERIF)
 
 
-def looks_bold(font: str, flags: int) -> bool:
-    return bool(BOLD_NAME.search(font.split("+")[-1])) or bool(flags & BOLD)
+def looks_bold(font: str, flags: int, shapes: dict | None = None) -> bool:
+    shape = _shape(font, shapes)
+    return bool(BOLD_NAME.search(_base_name(font))) or bool(flags & BOLD) or bool(shape and shape[1])
+
+
+def looks_italic(font: str, flags: int) -> bool:
+    return bool(ITALIC_NAME.search(_base_name(font))) or bool(flags & ITALIC)
+
+
+SERIF_FOOT = 1.3  # a stem this much wider at its foot than in its middle ends in a serif
+BOLD_STEM = 0.15  # stem width relative to the letter's height, above which a font is bold
+
+
+def _glyph_shape(buffer: bytes):
+    """(serif, bold) from how an "l", "I" or "i" of the font is drawn, or None if it has none of them."""
+    try:
+        font = pymupdf.Font(fontbuffer=buffer)
+    except (RuntimeError, ValueError):
+        return None
+    for ch in "lIi":
+        if not font.has_glyph(ord(ch)):
+            continue
+        doc = pymupdf.open()
+        page = doc.new_page(width=200, height=200)
+        try:
+            page.insert_font(fontname="F", fontbuffer=buffer)
+            page.insert_text((50, 150), ch, fontname="F", fontsize=120)
+        except (RuntimeError, ValueError):
+            return None
+        pix = page.get_pixmap(dpi=72, colorspace=pymupdf.csGRAY)
+        widths = []
+        for y in range(pix.height):
+            row = pix.samples[y * pix.stride: y * pix.stride + pix.width]
+            ink = [x for x, v in enumerate(row) if v < 128]
+            widths.append(ink[-1] - ink[0] + 1 if ink else 0)
+        rows = [y for y, w in enumerate(widths) if w]
+        if len(rows) < 20:
+            continue
+        top, bottom = rows[0], rows[-1]
+        middle = widths[top + (bottom - top) * 6 // 10]
+        if not middle:
+            continue
+        return widths[bottom - 2] >= SERIF_FOOT * middle, middle / (bottom - top) >= BOLD_STEM
+    return None
+
+
+def font_shapes(doc) -> dict[str, tuple[bool, bool]]:
+    """(serif, bold) for every embedded font of ``doc``, judged by the shape of its letters."""
+    shapes, seen = {}, set()
+    for pno in range(len(doc)):
+        for xref, _, _, basefont, *_ in doc.get_page_fonts(pno):
+            name = _base_name(basefont)
+            if name in seen:
+                continue
+            seen.add(name)
+            try:
+                buffer = doc.extract_font(xref)[3]
+            except (RuntimeError, ValueError):
+                continue
+            shape = _glyph_shape(buffer) if buffer else None
+            if shape:
+                shapes[name] = shape
+    return shapes
 
 
 def has_unmapped_chars(text: str) -> bool:
@@ -79,30 +155,66 @@ def _join_lines(lines: list[str]) -> str:
     return text
 
 
-ITEM = re.compile(r"^\s*([•◦▪‣∙*–-]|[a-z]\.|\d{1,2}\s?\.)\s+")
+BULLETS = "•◦▪‣∙*–■□●○◆►-"
+ITEM = re.compile(r"^\s*([•◦▪‣∙*–■□●○◆►-]|[a-z]\.|\d{1,2}\s?\.)\s+")
 
 
 def _split_items(lines: list[dict]):
-    """Split a block's lines into (marker, lines) segments at bullet or enumerator line starts."""
+    """Split a block's lines into (marker, lines) segments at bullet or enumerator line starts.
+
+    A marker drawn as a span of its own is left out of the item's spans, so the item's box starts at
+    its text and the original marker stays on the page untouched."""
     segments = [["", []]]
     for line in lines:
         m = ITEM.match(line["text"])
         if m:
-            segments.append([m.group(1).replace(" ", ""), [{**line, "text": line["text"][m.end():]}]])
+            marker = m.group(1).replace(" ", "")
+            spans = line["spans"]
+            own = len(spans) > 1 and spans[0]["text"].strip() == marker
+            segments.append([marker, [{**line, "text": line["text"][m.end():], "spans": spans[1:] if own else spans,
+                                       "own_marker": own}]])
         else:
             segments[-1][1].append(line)
     return [(marker, seg) for marker, seg in segments if any(l["text"].strip() for l in seg)]
 
 
-def _style(spans, page: int, rect, text: str, lines: int) -> Part:
+def _split_indents(lines: list[dict]) -> list[list[dict]]:
+    """Split a block at first-line indents: books often set paragraphs without space between them."""
+    if len(lines) < 3:
+        return [lines]
+    left = min(l["bbox"][0] for l in lines)
+    right = max(l["bbox"][2] for l in lines)
+    size = lines[0]["spans"][0]["size"]
+    pieces = [[lines[0]]]
+    for i in range(1, len(lines)):
+        line, prev = lines[i], lines[i - 1]
+        nxt = lines[i + 1] if i + 1 < len(lines) else None
+        starts = (line["bbox"][0] > left + INDENT * size and nxt is not None and nxt["bbox"][0] < left + 0.3 * size
+                  and prev["bbox"][2] < right - size)
+        if starts:
+            pieces.append([])
+        pieces[-1].append(line)
+    return pieces
+
+
+STYLE_SHARE = 0.8  # bold or italic only when nearly all of a text has it (not for an emphasised word)
+
+
+def _style(spans, page: int, rect, text: str, lines: int, shapes=None) -> Part:
     """The look of the text that makes up most of the characters."""
-    weight = Counter()
+    weight, bold, italic = Counter(), 0, 0
+    largest = max(s["size"] for s in spans)
+    spans = [s for s in spans if s["size"] >= SCRIPT_RATIO * largest] or spans  # sub/superscripts do not count
     for s in spans:
-        weight[(round(s["size"], 1), looks_serif(s["font"], s["flags"]), looks_bold(s["font"], s["flags"]),
-                bool(s["flags"] & ITALIC), s["color"])] += len(s["text"].strip())
-    (size, serif, bold, italic, color), _ = weight.most_common(1)[0]
-    return Part(page=page, rect=tuple(round(v, 2) for v in rect), size=size, serif=serif, bold=bold, italic=italic,
-                color=color, chars=len(text), lines=lines)
+        font, flags, n = s["font"], s["flags"], len(s["text"].strip())
+        weight[(round(s["size"], 1), looks_serif(font, flags, shapes), s["color"])] += n
+        bold += n * looks_bold(font, flags, shapes)
+        italic += n * looks_italic(font, flags)
+    (size, serif, color), _ = weight.most_common(1)[0]
+    total = max(sum(weight.values()), 1)
+    return Part(page=page, rect=tuple(round(v, 2) for v in rect), size=size, serif=serif,
+                bold=bold >= STYLE_SHARE * total, italic=italic >= STYLE_SHARE * total, color=color,
+                chars=len(text), lines=lines)
 
 
 def _ink_rect(span) -> pymupdf.Rect:
@@ -122,7 +234,7 @@ def _script_spans(lines) -> int:
         spans = line["spans"]
         if len(spans) < 2:
             continue
-        main = max(spans, key=lambda s: len(s["text"].strip()))
+        main = max(spans, key=lambda s: (s["size"], len(s["text"].strip())))
         for s in spans:
             if s["size"] <= SCRIPT_RATIO * main["size"] and abs(s["origin"][1] - main["origin"][1]) > 1:
                 count += 1
@@ -130,7 +242,7 @@ def _script_spans(lines) -> int:
 
 
 def _font(span) -> str:
-    return span["font"].split("+")[-1]
+    return _base_name(span["font"])
 
 
 def symbolic_fonts(spans) -> set[str]:
@@ -141,10 +253,10 @@ def symbolic_fonts(spans) -> set[str]:
     """
     letters, total = Counter(), Counter()
     for font, text in spans:
-        font = font.split("+")[-1]
+        font = _base_name(font)
         chars = [c for c in text if not c.isspace()]
         total[font] += len(chars)
-        letters[font] += sum(c.isascii() and c.isalpha() for c in chars)
+        letters[font] += sum(c.isascii() and c.isalnum() for c in chars)  # numbers are text too ("A.1")
     return {f for f in total if MATH_FONT.search(f) or (total[f] and letters[f] < 0.5 * total[f])}
 
 
@@ -153,102 +265,292 @@ def _is_vertical(line) -> bool:
     return abs(dx - 1) > 0.01 or abs(dy) > 0.01
 
 
-LABEL_GAP = 1.5  # a gap wider than this many font sizes separates a margin label from its paragraph
-LABEL_MAX_CHARS = 30
+LABEL_GAP = 1.5  # a gap wider than this many font sizes separates cells of a row (table, contents, label)
+STYLE_GAP = 0.6  # a narrower gap is enough when the style changes too ("xiv ■ Contents")
+WORD_GAP = 0.15  # spans further apart than this many font sizes have a space between them
+INDENT = 0.8  # a first line indented this many font sizes starts a new paragraph
+# Text with nothing to translate: symbols, numbers, page references ("A-12", "R-1"), roman page numbers.
+NO_WORDS = re.compile(r"^[\W\d_]*$|^[ivxlc]{1,7}$|^[A-Z]{1,2}[-.]\d+(\.\d+)*$")
 
 
-def _split_label(lines: list[dict]):
-    """Split off a short label that starts the first line and is set apart by a wide gap
-    ("Example   Assume a disk…"), so it keeps its own place on the page."""
-    first = lines[0]
-    if len(lines) > 1 and first["spans"]:
-        # The label may be a line of its own, on the same baseline as the paragraph's first line.
-        nxt = lines[1]
-        same_row = abs(nxt["bbox"][1] - first["bbox"][1]) < 2
-        gap = nxt["bbox"][0] - _ink_rect(first["spans"][-1]).x1
-        short = sum(len(s["text"].strip()) for s in first["spans"]) <= LABEL_MAX_CHARS
-        if same_row and short and gap > LABEL_GAP * first["spans"][-1]["size"]:
-            return first, lines[1:]
-    spans = first["spans"]
-    for i in range(len(spans) - 1):
-        gap = _ink_rect(spans[i + 1]).x0 - _ink_rect(spans[i]).x1  # blanks often fill the gap
-        if gap > LABEL_GAP * spans[i]["size"]:
-            head, rest = spans[: i + 1], spans[i + 1:]
-            if sum(len(s["text"].strip()) for s in head) > LABEL_MAX_CHARS:
+def _looks(span):
+    return _font(span), round(span["size"], 1), span["color"]
+
+
+def _span_text(spans) -> str:
+    text, prev = "", None
+    for s in spans:
+        if (prev is not None and not text.endswith(" ") and not s["text"].startswith(" ")
+                and _ink_rect(s).x0 - _ink_rect(prev).x1 > WORD_GAP * prev["size"]):
+            text += " "
+        text += s["text"]
+        prev = s
+    return text
+
+
+def _rows(lines: list[dict]) -> list[dict]:
+    """Group PyMuPDF lines that share a baseline into visual rows (tables and contents pages often
+    store every cell as a line of its own)."""
+    groups = []
+    for line in lines:
+        if not line["spans"]:
+            continue
+        y0, y1 = line["bbox"][1], line["bbox"][3]
+        for g in groups[-3:]:
+            gy0, gy1 = g[0]["bbox"][1], g[0]["bbox"][3]
+            if min(y1, gy1) - max(y0, gy0) > 0.5 * min(y1 - y0, gy1 - gy0):
+                g.append(line)
                 break
-            label = {"text": "".join(s["text"] for s in head), "bbox": head[0]["bbox"], "spans": head}
-            first = {"text": "".join(s["text"] for s in rest), "bbox": rest[0]["bbox"], "spans": rest}
-            return label, [first, *lines[1:]]
-    return None, lines
+        else:
+            groups.append([line])
+    rows = []
+    for g in groups:
+        g.sort(key=lambda l: l["bbox"][0])
+        bbox = pymupdf.Rect(g[0]["bbox"])
+        for l in g[1:]:
+            bbox |= l["bbox"]
+        rows.append({"text": " ".join(l["text"].strip() for l in g), "bbox": tuple(bbox),
+                     "spans": [s for l in g for s in l["spans"]]})
+    return rows
 
 
-def _split_row(lines: list[dict]) -> list[dict] | None:
-    """A block that is a single row with wide gaps (legend entries, table cells) becomes one piece per
-    gap-separated run of text. Returns None for ordinary blocks."""
-    if not lines or any(abs(l["bbox"][1] - lines[0]["bbox"][1]) > 2 for l in lines):
-        return None
-    spans = sorted((s for l in lines for s in l["spans"]), key=lambda s: s["bbox"][0])
-    runs, current = [], [spans[0]]
+def _cells(row: dict) -> list[dict]:
+    """Split a row at wide gaps into cells; a row without such gaps is one cell."""
+    spans = row["spans"]
+    runs = [[spans[0]]]
     for s in spans[1:]:
-        if _ink_rect(s).x0 - _ink_rect(current[-1]).x1 > LABEL_GAP * current[-1]["size"]:
-            runs.append(current)
-            current = []
-        current.append(s)
-    runs.append(current)
-    if len(runs) < 2:
+        last = runs[-1][-1]
+        gap = _ink_rect(s).x0 - _ink_rect(last).x1
+        bullet = len(runs) == 1 and len(runs[0]) == 1 and last["text"].strip() in BULLETS  # a list item
+        if not bullet and (gap > LABEL_GAP * last["size"]
+                           or (gap > STYLE_GAP * last["size"] and _looks(s) != _looks(last))):
+            runs.append([])
+        runs[-1].append(s)
+    if len(runs) == 1:
+        return [row]
+    cells = []
+    for run in runs:
+        bbox = _ink_rect(run[0])
+        for s in run[1:]:
+            bbox |= _ink_rect(s)
+        cells.append({"text": _span_text(run), "bbox": tuple(bbox), "spans": run})
+    return cells
+
+
+def _wraps_into(seg: list[dict], cell: dict, cells: list[dict]) -> bool:
+    """True when ``cell`` is the rest of ``seg`` wrapped onto the next row: same style, same left edge,
+    and its first word would not have fitted on the line above."""
+    last = seg[-1]
+    if abs(seg[0]["bbox"][0] - cell["bbox"][0]) >= 3 or _looks(last["spans"][-1]) != _looks(cell["spans"][0]):
+        return False
+    edge = max(c["bbox"][2] for c in cells if abs(c["bbox"][0] - cell["bbox"][0]) < 3)
+    word = (cell["text"].split() or [""])[0]
+    return last["bbox"][2] + len(word) * 0.45 * cell["spans"][0]["size"] > edge - 1
+
+
+def _cell_segments(rows: list[list[dict]], page_cells: list[dict] | None = None) -> list[list[dict]]:
+    """Blocks laid out as rows of cells: every cell is its own piece of text, except that a cell that
+    wraps the text of the cell above it (a long title) continues it. Only a row's single cell, or a cell
+    that does not start in the first column, can continue."""
+    everything = [c for cells in rows for c in cells] + (page_cells or [])  # column edges span blocks
+    segments, columns = [], []
+    for cells in rows:
+        first = cells[0]
+        target = next((seg for k, (x0, seg) in enumerate(columns)
+                       if (len(cells) == 1 or k > 0) and _wraps_into(seg, first, everything)), None)
+        if target is not None:
+            target.append(first)
+            if len(cells) == 1:
+                continue
+            cells = cells[1:]
+        columns = [(x0, seg) for x0, seg in columns if seg is target]
+        for cell in cells:
+            segments.append([cell])
+            columns.append((cell["bbox"][0], segments[-1]))
+        columns.sort(key=lambda c: c[0])
+    return segments
+
+
+GLYPH_GRID = 24
+GLYPH_CANDIDATES = "×−±≤≥÷→←↑↓∞≈≠·•°µ′″–—≡∑∏√∂∆=+<>/()[]%*"
+GLYPH_MATCH = 0.5  # similarity needed to trust a recognised symbol (1.0 = identical)
+PROSE_WORDS = 12  # a recognised symbol makes text translatable only inside a sentence at least this long
+
+
+def _ink_grid(pix):
+    """The inked pixels, cropped and scaled into a square grid (keeping proportions), and the aspect ratio."""
+    w, h, stride, data = pix.width, pix.height, pix.stride, pix.samples
+    pts = [(x, y) for y in range(h) for x in range(w) if data[y * stride + x] < 128]
+    if not pts:
         return None
-    return [{"text": "".join(s["text"] for s in run), "bbox": run[0]["bbox"], "spans": run} for run in runs]
+    x0, x1 = min(p[0] for p in pts), max(p[0] for p in pts)
+    y0, y1 = min(p[1] for p in pts), max(p[1] for p in pts)
+    bw, bh = x1 - x0 + 1, y1 - y0 + 1
+    side = max(bw, bh)
+    ox, oy = (side - bw) / 2, (side - bh) / 2
+    return {(int((x - x0 + ox) * GLYPH_GRID / side), int((y - y0 + oy) * GLYPH_GRID / side)) for x, y in pts}, bw / bh
 
 
-def _raw_blocks(doc, page_dicts, symbolic: set[str]):
+_candidate_grids = {}
+
+
+def _candidates():
+    if not _candidate_grids:
+        doc = pymupdf.open()
+        for ch in GLYPH_CANDIDATES:
+            page = doc.new_page(width=100, height=100)
+            page.insert_text((20, 75), ch, fontname="tiro", fontsize=60)
+            grid = _ink_grid(page.get_pixmap(dpi=72, colorspace=pymupdf.csGRAY))
+            if grid:
+                _candidate_grids[ch] = grid
+    return _candidate_grids
+
+
+def _similarity(a, b) -> float:
+    (ga, ra), (gb, rb) = a, b
+    return len(ga & gb) / max(len(ga | gb), 1) * min(ra, rb) / max(ra, rb)
+
+
+_identified = {}
+
+
+def identify_glyph(page, span) -> str | None:
+    """Recognise a symbol whose font maps it to no real character (a "×" stored as "\x01") by comparing
+    its drawn shape with common symbols. Returns None when no symbol is a clear match."""
+    key = (_font(span), span["text"])
+    if key not in _identified:
+        pix = page.get_pixmap(clip=pymupdf.Rect(span["bbox"]), dpi=600, colorspace=pymupdf.csGRAY)
+        grid = _ink_grid(pix)
+        found = None
+        if grid:
+            ranked = sorted(((_similarity(grid, g), ch) for ch, g in _candidates().items()), reverse=True)
+            (best, ch), (second, _) = ranked[0], ranked[1]
+            if best >= GLYPH_MATCH and best >= 2 * second:
+                found = ch
+        if not grid:  # nothing drawn here (yet): do not remember, another page may show it
+            return None
+        _identified[key] = found
+    return _identified[key]
+
+
+def drop_accents(spans: list[dict]) -> list[dict]:
+    """Remove accents that a PDF draws as glyphs of their own over a letter ("Jos" + "´" + "e"):
+    they are not characters of the text, and in symbol fonts they look like mathematics."""
+    kept = []
+    for i, s in enumerate(spans):
+        mark = s["text"].strip()
+        if len(mark) == 1 and not mark.isalnum():
+            x0, x1 = s["bbox"][0], s["bbox"][2]
+            width = max(x1 - x0, 0.1)
+            over = [min(x1, n["bbox"][2]) - max(x0, n["bbox"][0]) for n in (spans[i - 1:i] + spans[i + 1:i + 2])
+                    if any(c.isalpha() for c in n["text"])]
+            if over and max(over) >= 0.5 * width:
+                continue
+        kept.append(s)
+    return kept
+
+
+def _recognise(page, span, symbolic):
+    """A single unreadable symbol inside text gets its real character back when its shape is recognised."""
+    text = span["text"].strip()
+    if len(text) == 1 and _font(span) in symbolic and (UNMAPPED.search(text) or MISENCODED_MATH.search(text)):
+        ch = identify_glyph(page, span)
+        if ch:
+            return {**span, "text": span["text"].replace(text, ch), "recognised": True}
+    return span
+
+
+FRACTION_BAR = re.compile(r"^[-–—_─]{4,}$")  # some PDFs draw a fraction bar as a row of dashes
+
+
+def _has_fraction_bar(rows: list[dict]) -> bool:
+    """True when a row of dashes sits between two rows of text: a fraction."""
+    return any(FRACTION_BAR.match(r["text"].replace(" ", "")) for r in rows[1:-1])
+
+
+def _page_cells(content) -> list[dict]:
+    """Every cell of every row on a page (to know how far each column reaches)."""
+    cells = []
+    for b in content["blocks"]:
+        if b["type"] == 0:
+            lines = [{"text": "".join(s["text"] for s in l["spans"]), "bbox": l["bbox"],
+                      "spans": [s for s in l["spans"] if s["text"].strip()]} for l in b["lines"]]
+            cells += [c for r in _rows(lines) for c in _cells(r)]
+    return cells
+
+
+def _raw_blocks(doc, page_dicts, symbolic: set[str], shapes=None):
     """Yield one dict per text segment or image, with its text, style and position."""
     for pno, (page, content) in enumerate(zip(doc, page_dicts), start=1):
         height = page.rect.height
+        page_cells = None
         for b in content["blocks"]:
             if b["type"] == 1:
                 x0, y0, x1, y1 = b["bbox"]
                 if x1 - x0 >= MIN_IMAGE and y1 - y0 >= MIN_IMAGE:
                     yield {"image": b["image"], "ext": b["ext"], "width": x1 - x0, "page": pno, "in_margin": False,
-                           "mono": False, "formula": False, "figure": False, "text": "", "size": 0, "keep": [],
-                           "marker": "", "part": None}
+                           "mono": False, "formula": False, "figure": False, "mark": False, "text": "", "size": 0,
+                           "keep": [], "marker": "", "part": None}
                 continue
             if b["type"] != 0:
                 continue
-            lines = [{"text": "".join(s["text"] for s in l["spans"]), "bbox": l["bbox"],
-                      "spans": [s for s in l["spans"] if s["text"].strip()]} for l in b["lines"]]
+            lines = []
+            for l in b["lines"]:
+                line_spans = [_recognise(page, sp, symbolic) for sp in drop_accents(l["spans"])]
+                lines.append({"text": "".join(s["text"] for s in line_spans), "bbox": l["bbox"],
+                              "spans": [s for s in line_spans if s["text"].strip()]})
             spans = [s for l in lines for s in l["spans"]]
             if not spans:
                 continue
             chars = sum(len(s["text"].strip()) for s in spans)
-            math_spans = [s for s in spans if _font(s) in symbolic]
+            math_spans = [s for s in spans if _font(s) in symbolic and not s.get("recognised")]
             math_chars = sum(len(s["text"].strip()) for s in math_spans)
             misencoded = any(MISENCODED_MATH.search(s["text"]) or UNMAPPED.search(s["text"]) for s in math_spans)
+            if any(s.get("recognised") for s in spans) and sum(len(l["text"].split()) for l in lines) < PROSE_WORDS:
+                misencoded = True  # a recognised symbol in a short text: an equation, keep it as it is
             mono = all(_is_mono(s) for s in spans)
             keep = [] if mono else [s["text"].strip() for s in spans if _is_mono(s)]
             y0, y1 = b["bbox"][1], b["bbox"][3]
             base = {"mono": mono, "page": pno, "in_margin": y1 < height * MARGIN or y0 > height * (1 - MARGIN),
                     "figure": any(_is_vertical(l) for l in b["lines"])}
             scripted = _script_spans(lines) >= FORMULA_SCRIPTS and chars < FORMULA_MAX_CHARS
-            if mono or base["figure"] or misencoded or math_chars >= FORMULA_SHARE * chars or scripted:
+            rows = _rows(lines)
+            fraction = len(rows) >= 3 and chars < FORMULA_MAX_CHARS and _has_fraction_bar(
+                sorted(rows, key=lambda r: r["bbox"][1]))
+            if mono or base["figure"] or misencoded or math_chars >= FORMULA_SHARE * chars or scripted or fraction:
                 text = "\n".join(l["text"].rstrip() for l in lines if l["text"].strip())
-                part = _style(spans, pno, b["bbox"], text, len(lines))
-                yield {**base, "text": text, "keep": [], "marker": "", "formula": not mono and not base["figure"],
-                       "size": part.size, "part": part}
+                part = _style(spans, pno, b["bbox"], text, len(lines), shapes)
+                yield {**base, "text": text, "keep": [], "marker": "", "mark": False,
+                       "formula": not mono and not base["figure"], "size": part.size, "part": part}
                 continue
-            label, lines = _split_label(lines)
-            pieces = _split_row(lines)
-            segments = ([("", [label])] if label else []) + (
-                [("", [p]) for p in pieces] if pieces else _split_items(lines))
+            cells = [_cells(r) for r in rows]
+            if any(len(c) > 1 for c in cells):
+                if page_cells is None:
+                    page_cells = _page_cells(content)
+                segments = [("", seg) for seg in _cell_segments(cells, page_cells)]
+            else:
+                segments = [(marker, piece) for marker, seg in _split_items([c[0] for c in cells])
+                            for piece in (_split_indents(seg) if not marker else [seg])]
             for marker, seg in segments:
                 text = _join_lines([l["text"] for l in seg])
                 seg_spans = [s for l in seg for s in l["spans"]]
                 rect = _ink_rect(seg_spans[0])
                 for s in seg_spans[1:]:
                     rect |= _ink_rect(s)
-                part = _style(seg_spans, pno, rect, text, len(seg))
-                seg_misencoded = any(_font(s) in symbolic and MISENCODED_MATH.search(s["text"]) for s in seg_spans)
+                part = _style(seg_spans, pno, rect, text, len(seg), shapes)
+                part.indent = round(max(0.0, seg[0]["bbox"][0] - min(l["bbox"][0] for l in seg)), 2)
+                part.marker_in_box = not seg[0].get("own_marker")
+                part.ascent = round(seg_spans[0]["origin"][1] - rect.y0, 2)
+                if len(seg) >= 3:
+                    rights = [l["bbox"][2] for l in seg[:-1]]
+                    part.justified = max(rights) - min(rights) < 0.5 * part.size
+                seg_misencoded = any(_font(s) in symbolic and not s.get("recognised") and MISENCODED_MATH.search(s["text"])
+                                     for s in seg_spans)
+                # A short text with sub- or superscripts ("Power" + "dynamic") is part of an equation.
+                seg_scripted = _script_spans(seg) > 0 and len(text.split()) < PROSE_WORDS
                 yield {**base, "text": text, "marker": marker, "keep": [k for k in keep if k in text],
-                       "formula": has_unmapped_chars(text) or seg_misencoded, "size": part.size, "part": part}
+                       "formula": has_unmapped_chars(text) or seg_misencoded or seg_scripted, "mark": not marker and bool(NO_WORDS.match(text)),
+                       "size": part.size, "part": part}
 
 
 def _furniture_keys(raw, pages: int) -> set[str]:
@@ -274,8 +576,11 @@ def _is_furniture(r, furniture) -> bool:
 
 def _continues(prev: Block, cur: Block) -> bool:
     """True when ``cur`` is the rest of a paragraph that ``prev`` left unfinished."""
-    return (prev.kind == cur.kind == "paragraph" and not re.search(r"[.!?:;\"”')\]]$", prev.text)
-            and cur.text[:1].islower())
+    if not (prev.kind == cur.kind == "paragraph" and prev.parts and cur.parts):
+        return False
+    a, b = prev.parts[-1], cur.parts[0]
+    return (not re.search(r"[.!?:;\"”')\]]$", prev.text) and cur.text[:1].islower()
+            and (a.size, a.serif, a.bold, a.italic) == (b.size, b.serif, b.bold, b.italic))
 
 
 def _absorb_fragments(blocks: list[Block]):
@@ -314,7 +619,7 @@ def extract(path) -> Book:
     page_dicts = [page.get_text("dict", sort=True) for page in doc]
     symbolic = symbolic_fonts((s["font"], s["text"]) for d in page_dicts for b in d["blocks"]
                               for l in b.get("lines", []) for s in l["spans"])
-    raw = list(_raw_blocks(doc, page_dicts, symbolic))
+    raw = list(_raw_blocks(doc, page_dicts, symbolic, font_shapes(doc)))
     furniture = _furniture_keys(raw, len(doc))
     # Running headers are translated in place; bare page numbers are dropped.
     for r in raw:
@@ -342,6 +647,8 @@ def extract(path) -> Book:
             kind, level = "figure", 0
         elif r["formula"]:
             kind, level = "formula", 0
+        elif r["mark"]:
+            kind, level = "mark", 0
         elif r["header"]:
             kind, level = "header", 0
         elif r["marker"]:

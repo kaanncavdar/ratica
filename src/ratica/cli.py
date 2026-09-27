@@ -30,7 +30,9 @@ def _progress_printer():
             first = done  # blocks already done before this run (resume, code)
         elapsed = time.monotonic() - start
         rate = (done - first) / elapsed if elapsed > 0 else 0
-        eta = f", about {int((total - done) / rate // 60) + 1} min left" if rate and done < total else ""
+        # Like the window: only once enough parts are done for the speed to mean something.
+        eta = (f", about {int((total - done) / rate // 60) + 1} min left" if done - first >= 20 and done < total
+               else "")
         print(f"\rTranslated {done}/{total} blocks{eta}   ", end="", file=sys.stderr, flush=True)
 
     return show
