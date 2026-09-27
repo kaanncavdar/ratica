@@ -1,0 +1,58 @@
+import os
+
+import pytest
+
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+from ratica import gui  # noqa: E402
+from ratica.service import Settings  # noqa: E402
+
+READY = Settings(backend="cuda", server="s", model="m", slots=2, words_per_second=10.0, llama_build="b11211")
+
+
+@pytest.fixture
+def ready(monkeypatch):
+    monkeypatch.setattr(gui, "load_settings", lambda: READY)
+    monkeypatch.setattr(Settings, "is_current", lambda self: True)
+
+
+def test_setup_panel_shows_when_not_ready(qtbot, monkeypatch):
+    monkeypatch.setattr(gui, "load_settings", lambda: None)
+    w = gui.MainWindow()
+    qtbot.addWidget(w)
+    assert w.setup_box.isVisibleTo(w)
+    assert not w.start_button.isEnabled()
+
+
+def test_choosing_a_pdf_shows_its_size_and_an_estimate(qtbot, ready, book_pdf):
+    w = gui.MainWindow()
+    qtbot.addWidget(w)
+    w.open_pdf(book_pdf)
+    assert "3 pages" in w.book_info.text()
+    assert "min" in w.estimate.text()
+    assert w.start_button.isEnabled()
+
+
+def test_translation_runs_to_the_end(qtbot, ready, book_pdf, fake_llama, tmp_path):
+    url, _ = fake_llama
+    w = gui.MainWindow(server_url=url)
+    qtbot.addWidget(w)
+    w.open_pdf(book_pdf)
+    w.set_target("tr")
+    with qtbot.waitSignal(w.job_done, timeout=20000):
+        w.start_button.click()
+    assert w.open_pdf_button.isEnabled()
+    assert (book_pdf.parent / "book.tr.pdf").exists()
+
+
+def test_pause_keeps_work_and_offers_resume(qtbot, ready, book_pdf, fake_llama):
+    url, _ = fake_llama
+    w = gui.MainWindow(server_url=url)
+    qtbot.addWidget(w)
+    w.open_pdf(book_pdf)
+    w.set_target("tr")
+    w.pause_requested = True  # pause before the first paragraph is sent
+    with qtbot.waitSignal(w.job_done, timeout=20000):
+        w.start()
+    assert w.start_button.text() == "Resume"
+    assert not (book_pdf.parent / "book.tr.pdf").exists()

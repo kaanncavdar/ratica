@@ -85,7 +85,9 @@ def translate_command(a) -> int:
         settings = _ready_settings()
         if a.slots:
             settings.slots = a.slots
-        minutes = estimate_seconds(extract(pdf), settings.words_per_second) / 60
+        seconds = estimate_seconds(extract(pdf), settings.words_per_second,
+                                   seconds_per_block=settings.seconds_per_block)
+        minutes = (seconds + 45) / 60  # + engine start
         _err(f"Estimated time on this computer: about {max(1, round(minutes))} min")
 
     result = translate_pdf(pdf, a.to, settings, out_dir=a.out, source=a.source, server_url=a.server_url,

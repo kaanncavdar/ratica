@@ -28,6 +28,18 @@ def test_estimate_counts_only_translatable_words():
     assert estimate_seconds(book, words_per_second=2.0) == 3.0
 
 
+def test_estimate_adds_a_fixed_cost_per_block():
+    book = Book("x.pdf", "x", [Block("b0", "item", "a. true", 1), Block("b1", "item", "b. false", 1),
+                               Block("b2", "code", "x = 1", 1)])
+    assert estimate_seconds(book, words_per_second=4.0, seconds_per_block=0.5) == 2.0
+
+
+def test_settings_saved_before_the_block_cost_existed_still_load(tmp_path):
+    (tmp_path / "old.json").write_text('{"backend": "cuda", "server": "s", "model": "m", "slots": 4, '
+                                       '"words_per_second": 60.0, "llama_build": "b11211"}', encoding="utf-8")
+    assert load_settings(tmp_path / "old.json").seconds_per_block == 0
+
+
 def test_estimate_skips_blocks_already_done():
     book = Book("x.pdf", "x", [Block("b0", "paragraph", "one two", 1), Block("b1", "paragraph", "three four", 1)])
     assert estimate_seconds(book, words_per_second=1.0, done_ids={"b0"}) == 2.0

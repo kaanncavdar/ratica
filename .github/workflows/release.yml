@@ -1,0 +1,81 @@
+name: Build installers
+
+# Every push to main builds the installers as downloadable artifacts. Tagging a version
+# (git tag v0.1.0 && git push --tags) also publishes them as a pre-release.
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            name: Windows
+          - os: macos-14
+            name: macOS
+          - os: ubuntu-22.04
+            name: Linux
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Qt libraries (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libxcb-cursor0 libfontconfig1
+      - run: uv sync --frozen --no-dev --group build
+      - name: Version
+        id: version
+        shell: bash
+        run: |
+          v=$(uv run --no-sync python -c "import sys; sys.path.insert(0, 'src'); import ratica; print(ratica.__version__)")
+          if [[ "$GITHUB_REF" == refs/tags/v* && "${GITHUB_REF#refs/tags/v}" != "$v" ]]; then
+            echo "Tag ${GITHUB_REF#refs/tags/} does not match ratica.__version__ $v"; exit 1
+          fi
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+      - run: uv run --no-sync pyinstaller packaging/ratica.spec --noconfirm
+
+      - name: Windows installer
+        if: runner.os == 'Windows'
+        run: |
+          choco install innosetup --no-progress -y
+          iscc /DAppVersion=${{ steps.version.outputs.version }} packaging\windows\ratica.iss
+      - name: macOS disk image
+        if: runner.os == 'macOS'
+        run: |
+          hdiutil create -volname Ratica -srcfolder dist/Ratica.app -ov -format UDZO \
+            "dist/Ratica-${{ steps.version.outputs.version }}-macOS-AppleSilicon.dmg"
+      - name: Linux archive
+        if: runner.os == 'Linux'
+        run: tar -C dist -czf "dist/Ratica-${{ steps.version.outputs.version }}-Linux-x64.tar.gz" Ratica
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Ratica-${{ matrix.name }}
+          path: |
+            dist/*.exe
+            dist/*.dmg
+            dist/*.tar.gz
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: files
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          prerelease: true
+          generate_release_notes: true
+          files: files/*

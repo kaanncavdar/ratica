@@ -40,6 +40,8 @@ CALIBRATION = [
     "that finds and frees unused objects automatically.",
 ]
 CALIBRATION_WORDS = sum(len(p.split()) for p in CALIBRATION)
+SHORT = ["Learning objectives", "Chapter summary", "Exercises", "Key terms", "Check your understanding",
+         "Further reading", "True or false?", "Try it yourself"]
 
 
 def pick_slots(throughput: dict[int, float]) -> int:
@@ -68,5 +70,12 @@ def measure(cfg: EngineConfig, target: str = "tr", levels=None, log_path=None, o
                 # Stop early once more parallelism clearly stops paying off.
                 if len(throughput) >= 2 and throughput[k] < 0.9 * max(throughput.values()):
                     break
-    slots = pick_slots(throughput)
-    return {"slots": slots, "words_per_second": throughput[slots], "throughput": throughput}
+            slots = pick_slots(throughput)
+            # Fixed cost per request: books are full of headings, list items and captions.
+            shorts = SHORT * 2
+            t0 = time.perf_counter()
+            with ThreadPoolExecutor(slots) as level_pool:
+                list(level_pool.map(translate, shorts))
+            per_block = (time.perf_counter() - t0) / len(shorts)
+    return {"slots": slots, "words_per_second": throughput[slots], "throughput": throughput,
+            "seconds_per_block": per_block}

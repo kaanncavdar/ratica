@@ -25,6 +25,7 @@ class Settings:
     slots: int
     words_per_second: float
     llama_build: str
+    seconds_per_block: float = 0  # fixed cost of each request, measured on short texts
 
     def is_current(self) -> bool:
         return (self.llama_build == install.LLAMA_BUILD and Path(self.server).exists()
@@ -47,9 +48,10 @@ def save_settings(s: Settings, path=None):
     Path(path or paths.config_path()).write_text(json.dumps(asdict(s), indent=1), encoding="utf-8")
 
 
-def estimate_seconds(book: Book, words_per_second: float, done_ids=frozenset()) -> float:
-    words = sum(len(b.text.split()) for b in book.blocks if b.translatable and b.id not in done_ids)
-    return words / words_per_second
+def estimate_seconds(book: Book, words_per_second: float, done_ids=frozenset(), seconds_per_block: float = 0) -> float:
+    """Words over measured speed, plus a fixed cost per paragraph (books have many short ones)."""
+    todo = [b for b in book.blocks if b.translatable and b.id not in done_ids]
+    return sum(len(b.text.split()) for b in todo) / words_per_second + len(todo) * seconds_per_block
 
 
 def prepare(on_progress=None, should_stop=None, log=print) -> Settings:
@@ -79,7 +81,8 @@ def prepare(on_progress=None, should_stop=None, log=print) -> Settings:
             last_error = e
             continue
         s = Settings(backend=backend, server=str(server), model=str(model), slots=result["slots"],
-                     words_per_second=round(result["words_per_second"], 2), llama_build=install.LLAMA_BUILD)
+                     words_per_second=round(result["words_per_second"], 2), llama_build=install.LLAMA_BUILD,
+                     seconds_per_block=round(result["seconds_per_block"], 3))
         save_settings(s)
         log(f"Ready: {backend}, {s.slots} paragraphs at once, {s.words_per_second:.0f} words/s")
         return s

@@ -1,0 +1,24 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-14, ubuntu-22.04]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Qt libraries (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libxcb-cursor0 libfontconfig1
+      - run: uv sync --frozen
+      - run: uv run pytest -q
+        env:
+          QT_QPA_PLATFORM: offscreen
