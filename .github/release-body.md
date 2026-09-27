@@ -1,5 +1,12 @@
 Ratica translates PDF books on your own computer and keeps the original page layout. Free, open source, offline. This is a **beta**: please [report anything that goes wrong](https://github.com/kaanncavdar/ratica/issues).
 
+## What's new in 0.1.1
+
+- **Translate from any supported language, not only English.** Ratica recognises the language of the book
+  and preselects it; you can change it in the new *Translate from* box.
+- English is now a target language too, so you can translate books into English.
+- On the command line, `--source` is detected from the book unless you give it.
+
 ![Before and after](https://raw.githubusercontent.com/kaanncavdar/ratica/main/docs/images/before-after.png)
 
 ## Which file do I need?

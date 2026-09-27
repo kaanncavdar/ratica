@@ -81,7 +81,11 @@ ratica translate book.pdf --to fr --reflow   # typeset a new PDF instead of keep
 
 ## Features
 
-- Translates text-based PDF books (textbooks, manuals, papers, novels) between many languages written left to right: Latin, Cyrillic, Greek, Chinese, Japanese, Korean, Devanagari and more.
+- Translates text-based PDF books (textbooks, manuals, papers, novels) **in any direction between 23 languages**:
+  Azerbaijani, Bulgarian, Chinese (Simplified), Czech, Dutch, English, French, German, Greek, Hindi, Indonesian,
+  Italian, Japanese, Korean, Polish, Portuguese, Romanian, Russian, Spanish, Swedish, Turkish, Ukrainian and
+  Vietnamese.
+- **Recognises the book's language** by itself; you only choose the language to translate to.
 - **Keeps the original layout**: every page stays where it was, with its images, tables, charts, colours and page numbers. Each paragraph is translated in its own box, in a matching serif or sans-serif font; longer translations use free space next to them before the text gets smaller.
 - Leaves code, formulas and URLs exactly as they are.
 - Also writes an **EPUB**, which reflows nicely on phones and e-readers.
