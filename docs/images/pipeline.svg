@@ -57,8 +57,8 @@
     <rect class="box" x="20" y="98" width="164" height="100" rx="10"/>
     <circle class="badge" cx="42" cy="122" r="11"/><text class="s badget" x="42" y="126" text-anchor="middle" font-weight="700">1</text>
     <text class="h ink" x="60" y="127">Extract</text>
-    <text class="s muted" x="34" y="156">text · fonts · layout</text>
-    <text class="s muted" x="34" y="176">skips code &amp; index</text>
+    <text class="s muted" x="34" y="156">text · boxes · fonts</text>
+    <text class="s muted" x="34" y="176">skips code &amp; formulas</text>
   </g>
   <path class="line" d="M186 148H206" stroke-width="1.6" marker-end="url(#a)"/>
   <g>
@@ -88,9 +88,9 @@
   <g>
     <rect class="box" x="780" y="98" width="160" height="100" rx="10"/>
     <circle class="badge" cx="802" cy="122" r="11"/><text class="s badget" x="802" y="126" text-anchor="middle" font-weight="700">5</text>
-    <text class="h ink" x="820" y="127">Render</text>
-    <text class="s muted" x="794" y="156">PDF + EPUB</text>
-    <text class="s muted" x="794" y="176">Noto font fallback</text>
+    <text class="h ink" x="820" y="127">Write back</text>
+    <text class="s muted" x="794" y="156">into the original pages</text>
+    <text class="s muted" x="794" y="176">+ reflowed EPUB</text>
   </g>
 
   <!-- outputs -->

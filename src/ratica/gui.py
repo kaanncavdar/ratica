@@ -13,10 +13,9 @@ from . import __version__, paths
 from .engine import LANGUAGES
 from .extract import extract
 from .queue import JobStore
-from .service import estimate_seconds, load_settings, prepare, translate_pdf, work_dir
+from .service import book_estimate, load_settings, prepare, translate_pdf, work_dir
 
 ISSUES_URL = "https://github.com/kaanncavdar/ratica/issues"
-ENGINE_START_SECONDS = 45  # loading the model before the first paragraph
 
 STYLE = """
 QWidget { font-size: 10.5pt; }
@@ -215,8 +214,7 @@ class MainWindow(QMainWindow):
         done = self._done_ids()
         self.start_button.setText("Resume" if done and not self.busy else "Translate")
         if self.settings and self.settings.words_per_second:
-            left = estimate_seconds(self.book, self.settings.words_per_second, done,
-                                    self.settings.seconds_per_block) + ENGINE_START_SECONDS
+            left = book_estimate(self.book, self.settings, done)
             self.estimate.setText(f"<b>{_fmt_minutes(left).capitalize()}</b> on this computer")
 
     # --- actions -----------------------------------------------------------------------------------------------

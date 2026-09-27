@@ -14,7 +14,7 @@ from pathlib import Path
 
 from . import __version__, hardware, paths
 from .extract import extract
-from .service import Settings, estimate_seconds, load_settings, prepare, translate_pdf
+from .service import Settings, book_estimate, load_settings, prepare, translate_pdf
 
 
 def _err(msg):
@@ -85,13 +85,11 @@ def translate_command(a) -> int:
         settings = _ready_settings()
         if a.slots:
             settings.slots = a.slots
-        seconds = estimate_seconds(extract(pdf), settings.words_per_second,
-                                   seconds_per_block=settings.seconds_per_block)
-        minutes = (seconds + 45) / 60  # + engine start
+        minutes = book_estimate(extract(pdf), settings) / 60
         _err(f"Estimated time on this computer: about {max(1, round(minutes))} min")
 
     result = translate_pdf(pdf, a.to, settings, out_dir=a.out, source=a.source, server_url=a.server_url,
-                           keep_terms=keep, on_progress=_progress_printer())
+                           keep_terms=keep, on_progress=_progress_printer(), reflow_pdf=a.reflow)
     _err("")
     _err(f"Wrote {result['pdf']}\nWrote {result['epub']}")
     return 0
@@ -112,6 +110,8 @@ def main(argv=None) -> int:
     t.add_argument("--out", help="output folder (default: next to the PDF)")
     t.add_argument("--keep", help="comma-separated names that must not be translated")
     t.add_argument("--slots", type=int, help="paragraphs translated at once (default: measured)")
+    t.add_argument("--reflow", action="store_true",
+                   help="typeset a new PDF instead of keeping the original page layout")
     adv = t.add_argument_group("advanced: use your own engine")
     adv.add_argument("--server-url", help="URL of a running llama-server")
     adv.add_argument("--llama-server", help="path to a llama-server executable")

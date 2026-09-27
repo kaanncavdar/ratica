@@ -109,5 +109,94 @@ def test_lettered_options_become_separate_items(tmp_path):
     ]
 
 
+def test_symbol_font_text_is_a_formula_and_not_translated(tmp_path):
+    doc = pymupdf.open()
+    page = doc.new_page()
+    page.insert_textbox(pymupdf.Rect(72, 72, 520, 100), "Speedup = 1 / (1 - f)", fontname="symb", fontsize=11)
+    page.insert_textbox(pymupdf.Rect(72, 110, 520, 150), "Amdahl's law limits the speedup.", fontname="helv",
+                        fontsize=11)
+    doc.save(tmp_path / "f.pdf")
+    blocks = extract(tmp_path / "f.pdf").blocks
+    assert blocks[0].kind == "formula" and not blocks[0].translatable
+    assert blocks[1].kind == "paragraph"
+
+
+def test_private_use_characters_keep_the_block_untranslated():
+    from ratica.extract import has_unmapped_chars
+    assert has_unmapped_chars("CPU time = count  cycles")
+    assert has_unmapped_chars("broken � glyph")
+    assert has_unmapped_chars("Instruction count \x02 Clock cycles")  # a math font's × read as a control code
+    assert not has_unmapped_chars("Işık × π ≈ 3.14\ttab")
+
+
+def _write_spans(page, x, y, spans):
+    """spans: (text, fontname, size, dy); dy shifts the baseline (subscripts go down)."""
+    for text, font, size, dy in spans:
+        page.insert_text((x, y + dy), text, fontname=font, fontsize=size)
+        x += pymupdf.get_text_length(text, fontname=font, fontsize=size)
+
+
+def test_text_with_subscripts_is_a_formula(tmp_path):
+    doc = pymupdf.open()
+    page = doc.new_page()
+    _write_spans(page, 72, 100, [("Speedup", "tiro", 11, 0), ("overall", "tiro", 7, 3), (" = Execution time", "tiro", 11, 0),
+                                  ("old", "tiro", 7, 3), (" / Execution time", "tiro", 11, 0), ("new", "tiro", 7, 3)])
+    page.insert_textbox(pymupdf.Rect(72, 150, 520, 200), "Amdahl's law limits the speedup of a program.",
+                        fontname="tiro", fontsize=11)
+    doc.save(tmp_path / "sub.pdf")
+    blocks = extract(tmp_path / "sub.pdf").blocks
+    assert blocks[0].kind == "formula"
+    assert blocks[-1].kind == "paragraph"
+
+
+def test_one_footnote_mark_does_not_make_a_paragraph_a_formula(tmp_path):
+    doc = pymupdf.open()
+    page = doc.new_page()
+    _write_spans(page, 72, 100, [("Moore's law has slowed down in recent years, as many authors note", "tiro", 11, 0),
+                                  ("1", "tiro", 7, -4), (".", "tiro", 11, 0)])
+    doc.save(tmp_path / "fn.pdf")
+    assert extract(tmp_path / "fn.pdf").blocks[0].kind == "paragraph"
+
+
+def test_fraction_parts_next_to_a_formula_stay_with_it(tmp_path):
+    doc = pymupdf.open()
+    page = doc.new_page()
+    page.insert_text((200, 92), "Execution time", fontname="tiro", fontsize=9)   # numerator
+    page.insert_text((72, 100), "Speedup = \x02", fontname="tiro", fontsize=11)   # the line with the unmapped sign
+    page.insert_text((200, 110), "Execution time", fontname="tiro", fontsize=9)  # denominator
+    page.insert_textbox(pymupdf.Rect(72, 160, 520, 200), "A normal paragraph far below the formula.",
+                        fontname="tiro", fontsize=11)
+    doc.save(tmp_path / "frac.pdf")
+    kinds = {b.text: b.kind for b in extract(tmp_path / "frac.pdf").blocks}
+    assert kinds.get("Execution time") in ("formula", None)  # merged into the formula or marked as one
+    assert all(k == "formula" for t, k in kinds.items() if "Execution" in t or "Speedup" in t)
+    assert kinds["A normal paragraph far below the formula."] == "paragraph"
+
+
+def test_blocks_remember_their_box_and_style(tmp_path):
+    pdf = write_pages(tmp_path / "s.pdf", [[("A serif paragraph.", "tiro", 11, 90)]])
+    part = extract(pdf).blocks[0].parts[0]
+    assert part.page == 1 and part.serif and round(part.size) == 11
+    assert pymupdf.Rect(part.rect).y0 >= 88
+
+
+def test_font_name_decides_serif_before_the_unreliable_flag():
+    from ratica.extract import looks_serif
+    assert not looks_serif("NotoSans-Regular", flags=4)
+    assert not looks_serif("ABCDEF+Arial-BoldMT", flags=4)
+    assert looks_serif("MMADLM+Times-Roman", flags=0)
+    assert looks_serif("NotoSerif-Italic", flags=0)
+    assert looks_serif("GCIIFE+AdvOTce3d9a73", flags=4)  # obfuscated name: trust the flag
+    assert not looks_serif("GCIIFE+AdvOTce3d9a73", flags=0)
+
+
+def test_font_name_marks_bold():
+    from ratica.extract import looks_bold
+    assert looks_bold("NotoSans-Bold", flags=0)
+    assert looks_bold("Avenir-Heavy", flags=0)
+    assert not looks_bold("NotoSans-Regular", flags=0)
+    assert looks_bold("X+AdvOT123", flags=16)
+
+
 def test_block_ids_are_stable_across_runs(book_pdf):
     assert [b.id for b in extract(book_pdf).blocks] == [b.id for b in extract(book_pdf).blocks]

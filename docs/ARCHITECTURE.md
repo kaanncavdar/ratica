@@ -19,11 +19,11 @@ This document describes v1. Status: **draft for review** (2026-09-27).
 
 | # | Module | Responsibility | Main library |
 |---|---|---|---|
-| 1 | `extract` | Read text, fonts, positions and images from the PDF. Mark content that must not be translated: code blocks, bibliography, index, repeated headers and footers. Pluggable interface so OCR can be added in v2. | PyMuPDF |
+| 1 | `extract` | Read text, fonts, positions and images from the PDF, and remember each block's box and style. Mark content that must not be translated: code (monospaced), formulas (math/symbol fonts, sub- and superscripts, glyphs that map to no real character, and the fraction pieces around them), repeated headers and footers. Pluggable interface so OCR can be added in v2. | PyMuPDF |
 | 2 | `docmodel` | Format-independent book: chapters → blocks (paragraph, heading, list, table, image, code, formula). Every block has a stable ID and a hash of its source text. | dataclasses |
 | 3 | `protect` | Wrap spans that must survive unchanged in `<keep>…</keep>`: inline code, URLs, formulas, file paths and names from the user's do-not-translate list. After translation, check that every span came back intact; retry once, then fall back to the source text for that paragraph. | regex |
 | 4 | `queue` | Store every block and its state (`pending → translating → done / failed`) in SQLite. Send N blocks to the engine at once. Identical source text is translated once and reused. | sqlite3 |
-| 5 | `render` | Build the translated book from the document model: reflowed PDF and EPUB. Pick Noto fonts when the original font lacks the target language's letters and embed only the used glyphs. Formulas are copied as images in v1. | PyMuPDF, ebooklib |
+| 5 | `layout`, `render` | **PDF:** open the original, remove the text of each translated block from its box (images, lines and everything else stay) and set the translation in the same box with a matching serif/sans-serif font, size and colour. A longer translation first grows into free space (right to its column edge, then down to the next content) before the font shrinks. Formulas, code and anything a translated box would overlap are left untouched. **EPUB:** reflowed from the document model. An optional reflowed PDF is available with `--reflow`. | PyMuPDF, ebooklib |
 | 6 | `engine` | Start, watch and stop `llama-server` as a child process on `127.0.0.1`. Choose the build (CUDA, Metal, Vulkan, CPU) and the number of parallel slots. | subprocess, httpx |
 | 7 | `gui` | Pick a file and target language, see the time estimate, follow progress, open finished chapters while the rest translates. | PySide6 |
 | 8 | `setup` | First-launch downloads with progress and checksum verification: the model and, on NVIDIA, the CUDA runtime. | httpx |
@@ -58,7 +58,7 @@ The engine is a separate process on purpose: llama.cpp ships ready-made builds f
 2. The app estimates the time: *remaining words × measured seconds per word*, and shows it.
 3. `queue` sends blocks to the engine in reading order, N at a time. Each result goes through `protect`'s check and is saved immediately.
 4. Finished chapters can be rendered and opened right away.
-5. When all blocks are done, `render` writes `book.<lang>.pdf` and `book.<lang>.epub`.
+5. When all blocks are done, `layout` writes `book.<lang>.pdf` into the original pages and `render` writes `book.<lang>.epub`.
 
 A project folder next to the book keeps the SQLite queue, so reopening the same PDF continues the job. The source-text hash detects a changed PDF.
 

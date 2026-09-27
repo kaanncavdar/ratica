@@ -40,6 +40,14 @@ def test_settings_saved_before_the_block_cost_existed_still_load(tmp_path):
     assert load_settings(tmp_path / "old.json").seconds_per_block == 0
 
 
+def test_book_estimate_adds_real_text_margin_and_engine_start():
+    from ratica.service import ENGINE_START_SECONDS, REAL_TEXT_FACTOR, book_estimate
+    s = Settings(backend="cuda", server="s", model="m", slots=4, words_per_second=10.0, llama_build="b11211",
+                 seconds_per_block=0.5)
+    book = Book("x.pdf", "x", [Block("b0", "paragraph", " ".join(["w"] * 100), 1)])
+    assert book_estimate(book, s) == (10 + 0.5) * REAL_TEXT_FACTOR + ENGINE_START_SECONDS
+
+
 def test_estimate_skips_blocks_already_done():
     book = Book("x.pdf", "x", [Block("b0", "paragraph", "one two", 1), Block("b1", "paragraph", "three four", 1)])
     assert estimate_seconds(book, words_per_second=1.0, done_ids={"b0"}) == 2.0

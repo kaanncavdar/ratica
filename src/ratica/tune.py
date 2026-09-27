@@ -59,7 +59,8 @@ def measure(cfg: EngineConfig, target: str = "tr", levels=None, log_path=None, o
         with ThreadPoolExecutor(max(levels)) as pool:
             list(pool.map(translate, CALIBRATION[:max(levels)]))  # warm-up: compiles GPU kernels once
             for k in levels:
-                texts = (CALIBRATION * 2)[: max(3, 2 * k)]  # at least two full rounds per level
+                # The whole calibration set (and at least two rounds of k) per level: short runs are too noisy.
+                texts = (CALIBRATION * 2)[: max(len(CALIBRATION), 2 * k)]
                 t0 = time.perf_counter()
                 with ThreadPoolExecutor(k) as level_pool:
                     list(level_pool.map(translate, texts))
@@ -67,9 +68,6 @@ def measure(cfg: EngineConfig, target: str = "tr", levels=None, log_path=None, o
                 throughput[k] = words / (time.perf_counter() - t0)
                 if on_step:
                     on_step(k, throughput[k])
-                # Stop early once more parallelism clearly stops paying off.
-                if len(throughput) >= 2 and throughput[k] < 0.9 * max(throughput.values()):
-                    break
             slots = pick_slots(throughput)
             # Fixed cost per request: books are full of headings, list items and captions.
             shorts = SHORT * 2

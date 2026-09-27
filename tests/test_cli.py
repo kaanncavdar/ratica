@@ -9,6 +9,14 @@ def test_translate_writes_pdf_and_epub(book_pdf, fake_llama, tmp_path):
     assert (out / "book.tr.epub").exists()
 
 
+def test_translated_pdf_keeps_the_original_pages(book_pdf, fake_llama, tmp_path):
+    import pymupdf
+    url, _ = fake_llama
+    out = tmp_path / "out"
+    main(["translate", str(book_pdf), "--to", "tr", "--server-url", url, "--out", str(out)])
+    assert len(pymupdf.open(out / "book.tr.pdf")) == len(pymupdf.open(book_pdf))
+
+
 def test_second_run_reuses_saved_work(book_pdf, fake_llama, tmp_path):
     url, seen = fake_llama
     args = ["translate", str(book_pdf), "--to", "tr", "--server-url", url, "--out", str(tmp_path / "out")]

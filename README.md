@@ -1,6 +1,6 @@
 # Ratica
 
-**Translate long technical PDF books on your own computer.** Ratica reads a PDF, translates it paragraph by paragraph with a local AI model, and gives you the translation as both PDF and EPUB. No cloud, no account, no API key. Your book never leaves your machine.
+**Translate long technical PDF books on your own computer.** Ratica reads a PDF, translates it paragraph by paragraph with a local AI model, and writes the translation back into the original pages, so the book keeps its layout, images and formulas. You also get an EPUB. No cloud, no account, no API key. Your book never leaves your machine.
 
 > **Status: beta.** Ratica works end to end, but it is young: expect rough edges and please [report them](https://github.com/kaanncavdar/ratica/issues).
 
@@ -27,7 +27,7 @@ Download or clone this repository, then double-click **`start.bat`** (Windows) o
 1. Choose a PDF or drop it on the window.
 2. Pick the language to translate to.
 3. Press **Translate**. You can pause and resume at any time; progress is saved.
-4. The translated `book.<language>.pdf` and `book.<language>.epub` are saved next to the original.
+4. The translated `book.<language>.pdf` (same layout as the original) and `book.<language>.epub` are saved next to the original.
 
 There is also a command line:
 
@@ -36,15 +36,15 @@ ratica translate book.pdf --to de        # translate (sets itself up on first us
 ratica translate book.pdf --to ja --keep "Kubernetes,Linus Torvalds"
 ratica setup                             # download and measure speed now
 ratica info                              # hardware and settings, for bug reports
+ratica translate book.pdf --to fr --reflow   # typeset a new PDF instead of keeping the layout
 ```
 
 ## Features
 
 - Translates text-based PDF books between many languages written left to right: Latin, Cyrillic, Greek, Chinese, Japanese, Korean, Devanagari and more.
-- Keeps code, URLs, formulas and names exactly as they are.
-- Keeps images, headings, lists and code blocks.
-- Shows every language's letters correctly by falling back to [Noto](https://fonts.google.com/noto) fonts.
-- Writes both a **PDF** and an **EPUB** (EPUB reflows nicely on phones and e-readers).
+- **Keeps the original layout**: every page stays where it was, with its images, tables, charts, colours and page numbers. Each paragraph is translated in its own box, in a matching serif or sans-serif font; longer translations use free space next to them before the text gets smaller.
+- Leaves code, formulas and URLs exactly as they are.
+- Also writes an **EPUB**, which reflows nicely on phones and e-readers.
 - Resumes where it stopped if the computer sleeps or the app closes.
 - Shows a time estimate before starting.
 - Sets itself up: it detects your hardware, downloads the right engine and model once, and measures your computer's speed.
@@ -78,8 +78,10 @@ Everything runs locally. Ratica only goes online to download the engine and the 
 ## Known limitations
 
 - Scanned PDFs (pages that are images) are not translated yet; OCR is planned.
-- Text inside images and diagrams stays in the original language.
-- The output is reflowed, so page numbers differ from the original. Formulas typeset as text may lose their layout.
+- Text inside images stays in the original language.
+- Formulas are kept exactly as they are, so a sentence that is part of a formula stays in the original language.
+- Running page headers and footers stay in the original language.
+- When a paragraph mixes bold and regular text, the translation uses one style for the whole paragraph.
 - The app window is in English for now.
 
 ## Roadmap

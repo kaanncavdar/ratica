@@ -12,6 +12,7 @@ from . import hardware, install, paths
 from .docmodel import Book
 from .engine import Engine, EngineConfig, make_translator
 from .extract import extract
+from .layout import write_layout_pdf
 from .queue import JobStore, translate_book
 from .render import write_epub, write_pdf
 from .tune import measure
@@ -52,6 +53,16 @@ def estimate_seconds(book: Book, words_per_second: float, done_ids=frozenset(), 
     """Words over measured speed, plus a fixed cost per paragraph (books have many short ones)."""
     todo = [b for b in book.blocks if b.translatable and b.id not in done_ids]
     return sum(len(b.text.split()) for b in todo) / words_per_second + len(todo) * seconds_per_block
+
+
+ENGINE_START_SECONDS = 45  # loading the model before the first paragraph
+REAL_TEXT_FACTOR = 1.25  # real books translate ~20-25% slower than the calibration text (longer paragraphs)
+
+
+def book_estimate(book: Book, settings: Settings, done_ids=frozenset()) -> float:
+    """Seconds this computer needs for the rest of ``book``, as shown to the user before starting."""
+    work = estimate_seconds(book, settings.words_per_second, done_ids, settings.seconds_per_block)
+    return work * REAL_TEXT_FACTOR + ENGINE_START_SECONDS
 
 
 def prepare(on_progress=None, should_stop=None, log=print) -> Settings:
@@ -96,8 +107,13 @@ def work_dir(pdf: Path, out_dir: Path, lang: str) -> Path:
 
 
 def translate_pdf(pdf, lang: str, settings: Settings | None = None, out_dir=None, source: str = "en",
-                  server_url: str | None = None, keep_terms=(), on_progress=None, should_stop=None) -> dict:
-    """Translate one PDF. Returns {"finished", "pdf", "epub", "seconds"}; paused jobs resume on the next call."""
+                  server_url: str | None = None, keep_terms=(), on_progress=None, should_stop=None,
+                  reflow_pdf: bool = False) -> dict:
+    """Translate one PDF. Returns {"finished", "pdf", "epub", "seconds"}; paused jobs resume on the next call.
+
+    The PDF keeps the original page layout unless ``reflow_pdf`` asks for a newly typeset book;
+    the EPUB is always reflowed.
+    """
     pdf = Path(pdf)
     out_dir = Path(out_dir) if out_dir else pdf.parent
     work = work_dir(pdf, out_dir, lang)
@@ -120,6 +136,10 @@ def translate_pdf(pdf, lang: str, settings: Settings | None = None, out_dir=None
         translations = store.translations()
         first_heading = next((b.id for b in book.blocks if b.kind == "heading"), None)
         book.title = translations.get(first_heading, book.title)
-        result["pdf"] = write_pdf(book, translations, out_dir / f"{pdf.stem}.{lang}.pdf", lang=lang)
+        pdf_out = out_dir / f"{pdf.stem}.{lang}.pdf"
+        if reflow_pdf:
+            result["pdf"] = write_pdf(book, translations, pdf_out, lang=lang)
+        else:
+            result["pdf"] = write_layout_pdf(book, translations, pdf_out)
         result["epub"] = write_epub(book, translations, out_dir / f"{pdf.stem}.{lang}.epub", lang=lang)
     return result
