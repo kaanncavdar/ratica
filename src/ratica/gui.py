@@ -7,10 +7,12 @@ from pathlib import Path
 
 from PySide6.QtCore import QLocale, QObject, QSettings, Qt, QUrl, Signal
 from PySide6.QtGui import QDesktopServices, QIcon
-from PySide6.QtWidgets import (QApplication, QComboBox, QFileDialog, QFrame, QHBoxLayout, QLabel, QLineEdit,
+from PySide6.QtWidgets import (QApplication, QComboBox, QFileDialog, QFrame, QGridLayout, QHBoxLayout, QLabel,
+                               QLineEdit,
                                QMainWindow, QMessageBox, QProgressBar, QPushButton, QVBoxLayout, QWidget)
 
 from . import __version__, paths
+from .detect import detect_language
 from .engine import LANGUAGES
 from .extract import extract
 from .queue import JobStore
@@ -125,22 +127,20 @@ class MainWindow(QMainWindow):
         self.book_info = _muted("Drop a PDF on this window or choose one.")
         lay.addWidget(self.book_info)
 
-        row = QHBoxLayout()
-        row.addWidget(QLabel("Translate to"))
-        self.language = QComboBox()
-        for code, name in sorted(LANGUAGES.items(), key=lambda kv: kv[1]):
-            if code != "en":
-                self.language.addItem(name, code)
-        self.language.currentIndexChanged.connect(lambda _: self._refresh())
-        row.addWidget(self.language, 1)
-        lay.addLayout(row)
-
-        row = QHBoxLayout()
-        row.addWidget(QLabel("Do not translate"))
+        grid = QGridLayout()
+        self.source_language, self.language = QComboBox(), QComboBox()
+        for n, (label, combo) in enumerate((("Translate from", self.source_language), ("Translate to", self.language))):
+            for code, name in sorted(LANGUAGES.items(), key=lambda kv: kv[1]):
+                combo.addItem(name, code)
+            combo.currentIndexChanged.connect(lambda _: self._refresh())
+            grid.addWidget(QLabel(label), n, 0)
+            grid.addWidget(combo, n, 1)
         self.keep = QLineEdit()
         self.keep.setPlaceholderText("names, separated by commas (optional)")
-        row.addWidget(self.keep, 1)
-        lay.addLayout(row)
+        grid.addWidget(QLabel("Do not translate"), 2, 0)
+        grid.addWidget(self.keep, 2, 1)
+        grid.setColumnStretch(1, 1)
+        lay.addLayout(grid)
         outer.addWidget(book_box)
 
         # --- run
@@ -184,6 +184,7 @@ class MainWindow(QMainWindow):
 
         prefs = QSettings("Ratica", "Ratica")
         default = prefs.value("target", QLocale.system().name().split("_")[0])
+        self.set_source("en")
         self.set_target(default if default in LANGUAGES and default != "en" else "es")
         self._refresh()
 
@@ -193,6 +194,14 @@ class MainWindow(QMainWindow):
 
     def target(self) -> str:
         return self.language.currentData()
+
+    def source(self) -> str:
+        return self.source_language.currentData()
+
+    def set_source(self, code: str):
+        idx = self.source_language.findData(code)
+        if idx >= 0:
+            self.source_language.setCurrentIndex(idx)
 
     def set_target(self, code: str):
         idx = self.language.findData(code)
@@ -207,10 +216,14 @@ class MainWindow(QMainWindow):
 
     def _refresh(self):
         self.setup_box.setVisible(not self.ready())
-        can_start = self.ready() and self.book is not None and not self.busy
+        same = self.source() == self.target()
+        can_start = self.ready() and self.book is not None and not self.busy and not same
         self.start_button.setEnabled(can_start)
         if self.book is None:
             self.estimate.setText("")
+            return
+        if same:
+            self.estimate.setText("Choose two different languages.")
             return
         done = self._done_ids()
         todo = {b.id for b in self.book.blocks if b.translatable}
@@ -240,6 +253,10 @@ class MainWindow(QMainWindow):
         words = sum(len(b.text.split()) for b in self.book.blocks if b.translatable)
         self.book_name.setText(f"<b>{self.pdf.name}</b>")
         self.book_info.setText(f"{pages} page{'s' if pages != 1 else ''} · {words:,} words to translate")
+        sample = " ".join(b.text for b in self.book.blocks if b.translatable)[:20000]
+        detected = detect_language(sample)
+        if detected in LANGUAGES:
+            self.set_source(detected)
         self.result = None
         for b in (self.open_pdf_button, self.open_epub_button):
             b.setEnabled(False)
@@ -280,11 +297,11 @@ class MainWindow(QMainWindow):
         self.status.setText("Starting the translation engine…")
         self._refresh()
         keep = [t.strip() for t in self.keep.text().split(",") if t.strip()]
-        pdf, lang, settings, url = self.pdf, self.target(), self.settings, self.server_url
+        pdf, lang, source, settings, url = self.pdf, self.target(), self.source(), self.settings, self.server_url
 
         def work():
             try:
-                result = translate_pdf(pdf, lang, settings, server_url=url, keep_terms=keep,
+                result = translate_pdf(pdf, lang, settings, source=source, server_url=url, keep_terms=keep,
                                        on_progress=lambda d, t: self.bridge.progress.emit(d, t),
                                        should_stop=lambda: self.pause_requested)
                 self.bridge.done.emit(("translate", result))

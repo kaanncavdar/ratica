@@ -37,3 +37,14 @@ def test_info_prints_hardware_and_settings(capsys, monkeypatch, tmp_path):
 def test_missing_pdf_is_a_clear_error(tmp_path, capsys):
     assert main(["translate", str(tmp_path / "nope.pdf"), "--to", "tr", "--server-url", "http://x"]) == 2
     assert "not found" in capsys.readouterr().err
+
+
+def test_the_source_language_is_detected_when_not_given(fake_llama, tmp_path, capsys):
+    from conftest import write_pages
+    url, seen = fake_llama
+    text = ("Das Programm liest das Buch und schreibt die Übersetzung in die Seiten, die der Leser sieht. "
+            "Es ist nicht schwer, und die Seiten bleiben, wie sie sind.")
+    pdf = write_pages(tmp_path / "buch.pdf", [[(text, "helv", 11, 90)]])
+    assert main(["translate", str(pdf), "--to", "en", "--server-url", url]) == 0
+    assert "from German to English" in seen[0][1]["messages"][0]["content"]
+    assert "German" in capsys.readouterr().err

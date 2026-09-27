@@ -66,3 +66,32 @@ def test_a_one_page_book_says_page(qtbot, ready, tmp_path):
     qtbot.addWidget(w)
     w.open_pdf(pdf)
     assert w.book_info.text().startswith("1 page ·")
+
+
+GERMAN = ("Das Programm liest das Buch und schreibt die Übersetzung in die Seiten, die der Leser sieht. "
+          "Es ist nicht schwer, und die Seiten bleiben, wie sie sind.")
+
+
+def test_the_book_language_is_detected_and_used(qtbot, ready, tmp_path, fake_llama):
+    from conftest import write_pages
+    url, seen = fake_llama
+    pdf = write_pages(tmp_path / "buch.pdf", [[(GERMAN, "helv", 11, 90)]])
+    w = gui.MainWindow(server_url=url)
+    qtbot.addWidget(w)
+    w.open_pdf(pdf)
+    assert w.source() == "de"
+    w.set_target("en")
+    with qtbot.waitSignal(w.job_done, timeout=20000):
+        w.start_button.click()
+    system = seen[0][1]["messages"][0]["content"]
+    assert "from German to English" in system
+
+
+def test_the_same_language_on_both_sides_cannot_start(qtbot, ready, book_pdf):
+    w = gui.MainWindow()
+    qtbot.addWidget(w)
+    w.open_pdf(book_pdf)
+    assert w.source() == "en"
+    w.set_target("en")
+    assert not w.start_button.isEnabled()
+    assert "different" in w.estimate.text()

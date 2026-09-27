@@ -13,6 +13,8 @@ import time
 from pathlib import Path
 
 from . import __version__, hardware, paths
+from .detect import detect_language
+from .engine import language_name
 from .extract import extract
 from .service import Settings, book_estimate, load_settings, prepare, translate_pdf
 
@@ -78,6 +80,11 @@ def translate_command(a) -> int:
         _err(f"error: {pdf} not found")
         return 2
     keep = [t.strip() for t in a.keep.split(",")] if a.keep else []
+    source = a.source
+    if source == "auto":
+        sample = " ".join(b.text for b in extract(pdf).blocks if b.translatable)[:20000]
+        source = detect_language(sample) or "en"
+        _err(f"Source language: {language_name(source)} (detected; use --source to change it)")
 
     if a.server_url:
         settings = Settings("external", "", "", a.slots or 1, 0, "")
@@ -90,7 +97,7 @@ def translate_command(a) -> int:
         minutes = book_estimate(extract(pdf), settings) / 60
         _err(f"Estimated time on this computer: about {max(1, round(minutes))} min")
 
-    result = translate_pdf(pdf, a.to, settings, out_dir=a.out, source=a.source, server_url=a.server_url,
+    result = translate_pdf(pdf, a.to, settings, out_dir=a.out, source=source, server_url=a.server_url,
                            keep_terms=keep, on_progress=_progress_printer(), reflow_pdf=a.reflow)
     _err("")
     _err(f"Wrote {result['pdf']}\nWrote {result['epub']}")
@@ -108,7 +115,7 @@ def main(argv=None) -> int:
     t = sub.add_parser("translate", help="translate a PDF into PDF + EPUB")
     t.add_argument("pdf")
     t.add_argument("--to", required=True, help="target language code, e.g. tr, de, zh")
-    t.add_argument("--source", default="en", help="source language code (default: en)")
+    t.add_argument("--source", default="auto", help="source language code (default: detected from the book)")
     t.add_argument("--out", help="output folder (default: next to the PDF)")
     t.add_argument("--keep", help="comma-separated names that must not be translated")
     t.add_argument("--slots", type=int, help="paragraphs translated at once (default: measured)")

@@ -40,8 +40,8 @@ local AI model, so it works offline and your files stay private.
 - **PDF and EPUB output:** read the translation as the original pages or on an e-reader.
 - **Free and open source** on Windows, macOS and Linux.
 
-Translate English PDFs to Turkish, Spanish, German, French, Japanese, Chinese and 20+ other languages (other
-source languages work from the command line with `--source`).
+Translate between English, Turkish, Spanish, German, French, Japanese, Chinese and 20+ other languages, in
+any direction. Ratica recognises the language of the book by itself.
 
 ## Install
 
@@ -62,7 +62,7 @@ Download or clone this repository, then double-click **`start.bat`** (Windows) o
 ## Use
 
 1. Choose a PDF or drop it on the window.
-2. Pick the language to translate to.
+2. Pick the language to translate to. The book's own language is recognised for you; change it if needed.
 3. Press **Translate**. You can pause and resume at any time; progress is saved.
    Want to try it first? Use the one-page [sample book](docs/demo/sample-book.pdf).
 4. The translated `book.<language>.pdf` (same layout as the original) and `book.<language>.epub` are saved next to the original.
