@@ -1,10 +1,30 @@
-# Ratica
+<p align="center">
+  <img src="src/ratica/assets/icon.png" width="120" alt="Ratica icon">
+</p>
 
-**Translate long technical PDF books on your own computer.** Ratica reads a PDF, translates it paragraph by paragraph with a local AI model, and writes the translation back into the original pages, so the book keeps its layout, images and formulas. You also get an EPUB. No cloud, no account, no API key. Your book never leaves your machine.
+<h1 align="center">Ratica</h1>
+
+<p align="center">
+  <b>Translate PDF books on your own computer, and keep the original page layout.</b><br>
+  Free, open source and private: no cloud, no account, no API key. Windows · macOS · Linux.
+</p>
+
+<p align="center">
+  <a href="https://github.com/kaanncavdar/ratica/releases/latest"><b>Download</b></a> ·
+  <a href="docs/media/ratica-intro.mp4">Watch the 30-second intro</a> ·
+  <a href="#use">How to use</a> ·
+  <a href="docs/ARCHITECTURE.md">How it works</a>
+</p>
+
+<p align="center">
+  <img src="docs/images/demo.gif" width="720" alt="A book page in English turning into the same page in Turkish">
+</p>
+
+Ratica is an offline **PDF book translator**. It reads a PDF, translates it paragraph by paragraph with a local AI model ([Gemma](https://ai.google.dev/gemma) running on [llama.cpp](https://github.com/ggml-org/llama.cpp)), and writes the translation back into the original pages: headings, lists, tables of contents, figures, colours and formulas stay where they were. You also get an EPUB for e-readers. Your book never leaves your machine.
 
 > **Status: beta.** Ratica works end to end, but it is young: expect rough edges and please [report them](https://github.com/kaanncavdar/ratica/issues).
 
-![How Ratica translates a book](docs/images/pipeline.svg)
+![An original page and Ratica's Turkish translation side by side](docs/images/before-after.png)
 
 ## Install
 
@@ -27,6 +47,7 @@ Download or clone this repository, then double-click **`start.bat`** (Windows) o
 1. Choose a PDF or drop it on the window.
 2. Pick the language to translate to.
 3. Press **Translate**. You can pause and resume at any time; progress is saved.
+   Want to try it first? Use the one-page [sample book](docs/demo/sample-book.pdf).
 4. The translated `book.<language>.pdf` (same layout as the original) and `book.<language>.epub` are saved next to the original.
 
 There is also a command line:
@@ -39,9 +60,11 @@ ratica info                              # hardware and settings, for bug report
 ratica translate book.pdf --to fr --reflow   # typeset a new PDF instead of keeping the layout
 ```
 
+![How Ratica translates a book](docs/images/pipeline.svg)
+
 ## Features
 
-- Translates text-based PDF books between many languages written left to right: Latin, Cyrillic, Greek, Chinese, Japanese, Korean, Devanagari and more.
+- Translates text-based PDF books (textbooks, manuals, papers, novels) between many languages written left to right: Latin, Cyrillic, Greek, Chinese, Japanese, Korean, Devanagari and more.
 - **Keeps the original layout**: every page stays where it was, with its images, tables, charts, colours and page numbers. Each paragraph is translated in its own box, in a matching serif or sans-serif font; longer translations use free space next to them before the text gets smaller.
 - Leaves code, formulas and URLs exactly as they are.
 - Also writes an **EPUB**, which reflows nicely on phones and e-readers.
@@ -52,7 +75,7 @@ ratica translate book.pdf --to fr --reflow   # typeset a new PDF instead of keep
 
 ## How fast is it?
 
-On an entry-level gaming GPU with 6 GB of memory, a 200-page book takes about **half an hour**. Faster GPUs finish sooner because they translate more paragraphs at once. Without a GPU, translation works but takes many hours.
+On an entry-level gaming GPU with 6 GB of memory, a 200-page book takes about **30–45 minutes**. Faster GPUs finish sooner because they translate more paragraphs at once. Without a GPU, translation works but takes many hours.
 
 ## Requirements
 
@@ -73,7 +96,7 @@ Ratica uses **[Gemma-4-E4B-it](https://huggingface.co/google/gemma-4-E4B-it)** (
 
 ## Privacy
 
-Everything runs locally. Ratica only goes online to download the engine and the model on first launch and to check for updates on GitHub. It never uploads your files or text.
+Everything runs locally. Ratica only goes online to download the engine and the model on first launch. It never uploads your files or text.
 
 ## Known limitations
 

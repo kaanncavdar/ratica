@@ -162,3 +162,15 @@ def test_quotation_marks_around_the_source_are_kept():
     assert _clean("“Hash Tables” is a short guide.", "“Hash Tabloları” kısa bir rehberdir.") == \
         "“Hash Tabloları” kısa bir rehberdir."
     assert _clean("Plain text.", "Düz metin.") == "Düz metin."
+
+
+def test_a_section_number_before_a_short_title_is_kept_as_it_is():
+    from ratica.queue import _translate_one
+    seen = []
+
+    def translate(text):
+        seen.append(text)
+        return "Haritalar Nasıl Yapılır"
+    assert _translate_one("2 How Maps Are Made", translate, ()) == ("2 Haritalar Nasıl Yapılır", "done")
+    assert seen == ["How Maps Are Made"]
+    assert _translate_one("2.1 Measuring the ground", lambda t: "Zemini ölçmek", ())[0] == "2.1 Zemini ölçmek"

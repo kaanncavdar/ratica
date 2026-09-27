@@ -1,7 +1,7 @@
 name: Build installers
 
 # Every push to main builds the installers as downloadable artifacts. Tagging a version
-# (git tag v0.1.0 && git push --tags) also publishes them as a pre-release.
+# (git tag v0.1.0 && git push --tags) also publishes them as a release, with .github/release-body.md.
 on:
   push:
     branches: [main]
@@ -70,12 +70,14 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           path: files
           merge-multiple: true
       - uses: softprops/action-gh-release@v2
         with:
-          prerelease: true
+          name: Ratica ${{ github.ref_name }} (beta)
+          body_path: .github/release-body.md
           generate_release_notes: true
           files: files/*

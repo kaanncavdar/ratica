@@ -213,7 +213,11 @@ class MainWindow(QMainWindow):
             self.estimate.setText("")
             return
         done = self._done_ids()
-        self.start_button.setText("Resume" if done and not self.busy else "Translate")
+        todo = {b.id for b in self.book.blocks if b.translatable}
+        if self.busy or not done:
+            self.start_button.setText("Translate")
+        else:
+            self.start_button.setText("Translate again" if todo <= done else "Resume")
         if self.settings and self.settings.words_per_second:
             left = book_estimate(self.book, self.settings, done)
             self.estimate.setText(f"<b>{_fmt_minutes(left).capitalize()}</b> on this computer")
@@ -235,7 +239,7 @@ class MainWindow(QMainWindow):
         pages = max((b.page for b in self.book.blocks), default=0)
         words = sum(len(b.text.split()) for b in self.book.blocks if b.translatable)
         self.book_name.setText(f"<b>{self.pdf.name}</b>")
-        self.book_info.setText(f"{pages} pages · {words:,} words to translate")
+        self.book_info.setText(f"{pages} page{'s' if pages != 1 else ''} · {words:,} words to translate")
         self.result = None
         for b in (self.open_pdf_button, self.open_epub_button):
             b.setEnabled(False)

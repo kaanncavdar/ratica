@@ -4,6 +4,7 @@ Blocks are sent to the translator several at a time (``slots``). Identical sourc
 translated once. A translation that drops a protected span is retried once and otherwise
 replaced by the source text, so code and URLs are never corrupted.
 """
+import re
 import sqlite3
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
@@ -102,7 +103,16 @@ def _clean(src: str, out: str) -> str:
     return out
 
 
+# "2 How Maps Are Made", "2.1 Measuring the ground": models tend to drop such numbers.
+SECTION_NUMBER = re.compile(r"^(\d{1,2}(?:\.\d{1,3})*\.?\s+)(?=[A-Z])")
+SECTION_TITLE_WORDS = 12
+
+
 def _translate_one(src: str, translate, keep_terms) -> tuple[str, str]:
+    number = SECTION_NUMBER.match(src)
+    if number and len(src.split()) <= SECTION_TITLE_WORDS:
+        out, status = _translate_one(src[number.end():], translate, keep_terms)
+        return (number.group(1) + out, status) if status == "done" else (src, status)
     tagged, spans = protect(src, keep_terms)
     for _ in range(2):
         out = _clean(src, translate(tagged))

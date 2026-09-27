@@ -43,6 +43,7 @@ def test_translation_runs_to_the_end(qtbot, ready, book_pdf, fake_llama, tmp_pat
         w.start_button.click()
     assert w.open_pdf_button.isEnabled()
     assert (book_pdf.parent / "book.tr.pdf").exists()
+    assert w.start_button.text() == "Translate again"
 
 
 def test_pause_keeps_work_and_offers_resume(qtbot, ready, book_pdf, fake_llama):
@@ -56,3 +57,12 @@ def test_pause_keeps_work_and_offers_resume(qtbot, ready, book_pdf, fake_llama):
         w.start()
     assert w.start_button.text() == "Resume"
     assert not (book_pdf.parent / "book.tr.pdf").exists()
+
+
+def test_a_one_page_book_says_page(qtbot, ready, tmp_path):
+    from conftest import write_pages
+    pdf = write_pages(tmp_path / "one.pdf", [[("A single page of text.", "helv", 11, 90)]])
+    w = gui.MainWindow()
+    qtbot.addWidget(w)
+    w.open_pdf(pdf)
+    assert w.book_info.text().startswith("1 page ·")

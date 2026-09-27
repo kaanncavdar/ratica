@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- Ratica's icon: an original page ("A") and its translation in the same layout. -->
+  <rect x="40" y="40" width="944" height="944" rx="210" fill="#1C6A86"/>
+  <!-- back page: the original -->
+  <g transform="rotate(-10 330 440)">
+    <path d="M150 190 H440 L520 270 V690 H150 Z" fill="#BFDCE6"/>
+    <path d="M440 190 V270 H520 Z" fill="#8FBFCF"/>
+    <path d="M205 560 L290 300 H340 L425 560 H372 L354 500 H276 L258 560 Z M290 452 H340 L315 366 Z" fill="#1A6682"/>
+  </g>
+  <!-- front page: the translation, same layout -->
+  <path d="M480 300 H790 L874 384 V820 H480 Z" fill="#FFFFFF"/>
+  <path d="M790 300 V384 H874 Z" fill="#D4E6EC"/>
+  <rect x="536" y="380" width="200" height="32" rx="10" fill="#1A6682"/>
+  <rect x="536" y="452" width="280" height="18" rx="9" fill="#9DB9C4"/>
+  <rect x="536" y="494" width="280" height="18" rx="9" fill="#9DB9C4"/>
+  <rect x="536" y="536" width="240" height="18" rx="9" fill="#9DB9C4"/>
+  <rect x="536" y="598" width="112" height="96" rx="10" fill="#F2A541"/>
+  <rect x="670" y="602" width="146" height="18" rx="9" fill="#9DB9C4"/>
+  <rect x="670" y="640" width="146" height="18" rx="9" fill="#9DB9C4"/>
+  <rect x="670" y="678" width="100" height="18" rx="9" fill="#9DB9C4"/>
+  <rect x="536" y="740" width="220" height="18" rx="9" fill="#9DB9C4"/>
+  <!-- badge: two arrows -->
+  <circle cx="330" cy="772" r="120" fill="#F2A541"/>
+  <path d="M258 742 H392 M358 708 L392 742 L358 776" stroke="#FFFFFF" stroke-width="28"
+        stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M402 806 H268 M302 772 L268 806 L302 840" stroke="#FFFFFF" stroke-width="28"
+        stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>
