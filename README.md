@@ -40,8 +40,8 @@ local AI model, so it works offline and your files stay private.
 - **PDF and EPUB output:** read the translation as the original pages or on an e-reader.
 - **Free and open source** on Windows, macOS and Linux.
 
-Translate English PDFs to Turkish, Spanish, German, French, Japanese, Chinese and 20+ other languages, or
-between any two of them.
+Translate English PDFs to Turkish, Spanish, German, French, Japanese, Chinese and 20+ other languages (other
+source languages work from the command line with `--source`).
 
 ## Install
 
