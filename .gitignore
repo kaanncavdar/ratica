@@ -1,0 +1,12 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Benchmark working files and results (machine-specific, stay local)
+bench-work/
+bench/results/
+bench/RESULTS.md
+
+# Local notes for the AI assistant
+CLAUDE.md

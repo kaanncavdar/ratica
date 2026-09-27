@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 460" width="960" height="460" role="img" aria-labelledby="t d">
+  <title id="t">Translation pipeline</title>
+  <desc id="d">A PDF is extracted, turned into a format-independent document model, protected spans are tagged, paragraphs are translated by a local llama-server through a resumable queue, and the result is rendered as PDF and EPUB.</desc>
+  <style>
+    .card{fill:#f7f9fb;stroke:#d8dee6}
+    .box{fill:#ffffff;stroke:#c9d3de}
+    .hl{fill:#e3f0f5;stroke:#1c6a86}
+    .out{fill:#e2f3ea;stroke:#1f7a4d}
+    .chip{fill:#ffffff;stroke:#d8dee6}
+    .ink{fill:#1b2230}
+    .muted{fill:#5b6677}
+    .acc{fill:#1c6a86}
+    .accs{stroke:#1c6a86}
+    .grn{fill:#1f7a4d}
+    .line{stroke:#8795a6;fill:none}
+    .badge{fill:#1c6a86}
+    .badget{fill:#ffffff}
+    .arrow{fill:#8795a6}
+    text{font-family:"Segoe UI",-apple-system,"Helvetica Neue",Arial,sans-serif}
+    .h{font-size:15px;font-weight:600}
+    .s{font-size:12px}
+    .xs{font-size:11px;letter-spacing:.06em}
+    .mono{font-family:Consolas,"SF Mono",Menlo,monospace;font-size:12px}
+    @media (prefers-color-scheme:dark){
+      .card{fill:#0f141a;stroke:#2a323e}
+      .box{fill:#161c24;stroke:#2f3a47}
+      .hl{fill:#16303a;stroke:#6cc0dc}
+      .out{fill:#15301f;stroke:#6fd3a0}
+      .chip{fill:#161c24;stroke:#2a323e}
+      .ink{fill:#e4e8ee}
+      .muted{fill:#9aa4b4}
+      .acc{fill:#6cc0dc}
+      .accs{stroke:#6cc0dc}
+      .grn{fill:#6fd3a0}
+      .line{stroke:#5c6878}
+      .badge{fill:#6cc0dc}
+      .badget{fill:#0f141a}
+      .arrow{fill:#5c6878}
+    }
+  </style>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" class="arrow"/>
+    </marker>
+  </defs>
+
+  <rect class="card" x="1" y="1" width="958" height="458" rx="14"/>
+  <text class="xs acc" x="24" y="32">TRANSLATION PIPELINE</text>
+
+  <!-- input -->
+  <rect class="chip" x="47" y="48" width="110" height="28" rx="14"/>
+  <text class="mono ink" x="102" y="67" text-anchor="middle">book.pdf</text>
+  <path class="line" d="M102 76V94" stroke-width="1.6" marker-end="url(#a)"/>
+
+  <!-- stages -->
+  <g>
+    <rect class="box" x="20" y="98" width="164" height="100" rx="10"/>
+    <circle class="badge" cx="42" cy="122" r="11"/><text class="s badget" x="42" y="126" text-anchor="middle" font-weight="700">1</text>
+    <text class="h ink" x="60" y="127">Extract</text>
+    <text class="s muted" x="34" y="156">text · fonts · layout</text>
+    <text class="s muted" x="34" y="176">skips code &amp; index</text>
+  </g>
+  <path class="line" d="M186 148H206" stroke-width="1.6" marker-end="url(#a)"/>
+  <g>
+    <rect class="box" x="210" y="98" width="164" height="100" rx="10"/>
+    <circle class="badge" cx="232" cy="122" r="11"/><text class="s badget" x="232" y="126" text-anchor="middle" font-weight="700">2</text>
+    <text class="h ink" x="250" y="127">Document model</text>
+    <text class="s muted" x="224" y="156">chapters · paragraphs</text>
+    <text class="s muted" x="224" y="176">tables · images</text>
+  </g>
+  <path class="line" d="M376 148H396" stroke-width="1.6" marker-end="url(#a)"/>
+  <g>
+    <rect class="box" x="400" y="98" width="164" height="100" rx="10"/>
+    <circle class="badge" cx="422" cy="122" r="11"/><text class="s badget" x="422" y="126" text-anchor="middle" font-weight="700">3</text>
+    <text class="h ink" x="440" y="127">Protect</text>
+    <text class="mono acc" x="414" y="156">&lt;keep&gt;</text><text class="s muted" x="462" y="156">code, URLs,</text>
+    <text class="s muted" x="414" y="176">formulas, names</text>
+  </g>
+  <path class="line" d="M566 148H586" stroke-width="1.6" marker-end="url(#a)"/>
+  <g>
+    <rect class="box" x="590" y="98" width="164" height="100" rx="10"/>
+    <circle class="badge" cx="612" cy="122" r="11"/><text class="s badget" x="612" y="126" text-anchor="middle" font-weight="700">4</text>
+    <text class="h ink" x="630" y="127">Translate queue</text>
+    <text class="s muted" x="604" y="156">SQLite · resumable</text>
+    <text class="s muted" x="604" y="176">N paragraphs at once</text>
+  </g>
+  <path class="line" d="M756 148H776" stroke-width="1.6" marker-end="url(#a)"/>
+  <g>
+    <rect class="box" x="780" y="98" width="160" height="100" rx="10"/>
+    <circle class="badge" cx="802" cy="122" r="11"/><text class="s badget" x="802" y="126" text-anchor="middle" font-weight="700">5</text>
+    <text class="h ink" x="820" y="127">Render</text>
+    <text class="s muted" x="794" y="156">PDF + EPUB</text>
+    <text class="s muted" x="794" y="176">Noto font fallback</text>
+  </g>
+
+  <!-- outputs -->
+  <path class="line" d="M860 198V222" stroke-width="1.6" marker-end="url(#a)"/>
+  <rect class="out" x="800" y="226" width="120" height="28" rx="14"/>
+  <text class="mono grn" x="860" y="245" text-anchor="middle">book.tr.pdf</text>
+  <rect class="out" x="800" y="262" width="120" height="28" rx="14"/>
+  <text class="mono grn" x="860" y="281" text-anchor="middle">book.tr.epub</text>
+
+  <!-- engine -->
+  <path class="line" d="M660 200V240" stroke-width="1.6" marker-start="url(#a)" marker-end="url(#a)"/>
+  <rect class="hl" x="520" y="244" width="250" height="112" rx="10" stroke-width="1.4"/>
+  <text class="h ink" x="540" y="272">Engine manager</text>
+  <text class="s ink" x="540" y="298">llama-server + Gemma-4-E4B</text>
+  <text class="s muted" x="540" y="320">CUDA · Metal · Vulkan · CPU</text>
+  <text class="s muted" x="540" y="340">picked from the hardware</text>
+
+  <!-- local only note -->
+  <g transform="translate(34 262)">
+    <rect class="accs" x="0" y="6" width="16" height="13" rx="2.5" fill="none" stroke-width="1.6"/>
+    <path class="accs" d="M3.5 6V3.5a4.5 4.5 0 0 1 9 0V6" fill="none" stroke-width="1.6"/>
+  </g>
+  <text class="h ink" x="60" y="280">Runs on your computer</text>
+  <text class="s muted" x="60" y="302">No text leaves the machine. No account,</text>
+  <text class="s muted" x="60" y="320">no cloud, no API key.</text>
+
+  <!-- support modules -->
+  <text class="xs acc" x="24" y="394">AROUND THE PIPELINE</text>
+  <rect class="chip" x="20" y="406" width="220" height="36" rx="8"/>
+  <text class="s ink" x="130" y="429" text-anchor="middle">GUI · PySide6</text>
+  <rect class="chip" x="252" y="406" width="220" height="36" rx="8"/>
+  <text class="s ink" x="362" y="429" text-anchor="middle">First-run setup · downloads</text>
+  <rect class="chip" x="484" y="406" width="220" height="36" rx="8"/>
+  <text class="s ink" x="594" y="429" text-anchor="middle">Hardware probe · logs</text>
+  <rect class="chip" x="716" y="406" width="224" height="36" rx="8"/>
+  <text class="s ink" x="828" y="429" text-anchor="middle">Update check · GitHub Releases</text>
+</svg>

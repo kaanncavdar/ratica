@@ -1,0 +1,915 @@
+[
+ {
+  "id": "flores-0-tr",
+  "kind": "flores",
+  "lang": "tr",
+  "src": "\"We now have 4-month-old mice that are non-diabetic that used to be diabetic,\" he added.",
+  "ref": "Daha önce diyabetik olup şimdi diyabetik olmayan 4 aylık farelerimiz var, diye ekledi.",
+  "rated": true,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-0-zh",
+  "kind": "flores",
+  "lang": "zh",
+  "src": "\"We now have 4-month-old mice that are non-diabetic that used to be diabetic,\" he added.",
+  "ref": "他补充道：“我们现在有 4 个月大没有糖尿病的老鼠，但它们曾经得过该病。”",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-0-ru",
+  "kind": "flores",
+  "lang": "ru",
+  "src": "\"We now have 4-month-old mice that are non-diabetic that used to be diabetic,\" he added.",
+  "ref": "\"Теперь у нас есть четырёхмесячные мыши, у которых больше нет диабета\", — добавил он.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-0-az",
+  "kind": "flores",
+  "lang": "az",
+  "src": "\"We now have 4-month-old mice that are non-diabetic that used to be diabetic,\" he added.",
+  "ref": "\"Hazırda bizim diabetdən əziyyət çəkməyən, amma əvvəl diabet olan 4 aylıq siçanlarımız var\", deyə o əlavə etdi.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-0-hi",
+  "kind": "flores",
+  "lang": "hi",
+  "src": "\"We now have 4-month-old mice that are non-diabetic that used to be diabetic,\" he added.",
+  "ref": "उन्होंने कहा “कि अब हमारे पास 4 महीने उम्र वाले चूहे हैं जिन्हें मधुमेह नहीं है जो मधुमेह के रोगी थे। ”",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-50-tr",
+  "kind": "flores",
+  "lang": "tr",
+  "src": "The Iraq Study Group presented its report at 12.00 GMT today.",
+  "ref": "Irak Çalışma Grubu bildirisni bugün 12.00 GMT'de takdim etti.",
+  "rated": true,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-50-zh",
+  "kind": "flores",
+  "lang": "zh",
+  "src": "The Iraq Study Group presented its report at 12.00 GMT today.",
+  "ref": "伊拉克研究小组于格林尼治时间 (GMT) 今天 12 点提交了报告。",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-50-ru",
+  "kind": "flores",
+  "lang": "ru",
+  "src": "The Iraq Study Group presented its report at 12.00 GMT today.",
+  "ref": "Сегодня в 12:00 по Гринвичу группа по изучению Ирака представила свой доклад.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-50-az",
+  "kind": "flores",
+  "lang": "az",
+  "src": "The Iraq Study Group presented its report at 12.00 GMT today.",
+  "ref": "Bu gün saat 12:00 GMT raddələrində İraq Tədqiqat Qrupu hesabatını təqdim etdi.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-50-hi",
+  "kind": "flores",
+  "lang": "hi",
+  "src": "The Iraq Study Group presented its report at 12.00 GMT today.",
+  "ref": "आज 12.00 GMT पर इराक स्टडी ग्रुप ने अपनी रिपोर्ट प्रस्तुत की.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-100-tr",
+  "kind": "flores",
+  "lang": "tr",
+  "src": "In one year's time, an infected person may infect 10 to 15 close contacts.",
+  "ref": "Enfekte bir kişi 1 yıl içerisinde 10 ila 15 yakın temasa hastalık bulaştırabilir.",
+  "rated": true,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-100-zh",
+  "kind": "flores",
+  "lang": "zh",
+  "src": "In one year's time, an infected person may infect 10 to 15 close contacts.",
+  "ref": "一年内，一个感染者可能会感染 10 至 15 名密切接触者。",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-100-ru",
+  "kind": "flores",
+  "lang": "ru",
+  "src": "In one year's time, an infected person may infect 10 to 15 close contacts.",
+  "ref": "За один год инфицированный человек может заразить от 10 до 15 человек при близком контакте.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-100-az",
+  "kind": "flores",
+  "lang": "az",
+  "src": "In one year's time, an infected person may infect 10 to 15 close contacts.",
+  "ref": "Yoluxmuş şəxs bir il müddətində onunla yaxın təmasda olan 10-15 nəfəri yoluxdura bilər.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-100-hi",
+  "kind": "flores",
+  "lang": "hi",
+  "src": "In one year's time, an infected person may infect 10 to 15 close contacts.",
+  "ref": "एक साल के दौरान, एक संक्रमित व्यक्ति 10 से 15 करीबी संपर्कों को संक्रमित कर सकता है.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-150-tr",
+  "kind": "flores",
+  "lang": "tr",
+  "src": "The medical charity Mangola, Medecines Sans Frontieres and the World Health Organisation say it is the worst outbreak recorded in the country.",
+  "ref": "Tıbbi yardım kuruluşu Mangola, Sınır Tanımayan Doktorlar ve Dünya Sağlık Örgütü, bunun ülkede görülen en kötü salgın olduğunu söylüyor.",
+  "rated": true,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-150-zh",
+  "kind": "flores",
+  "lang": "zh",
+  "src": "The medical charity Mangola, Medecines Sans Frontieres and the World Health Organisation say it is the worst outbreak recorded in the country.",
+  "ref": "医疗慈善机构 Mangola、无国界医生组织和世界卫生组织表示，这是该国有史以来最严重的疫情。",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-150-ru",
+  "kind": "flores",
+  "lang": "ru",
+  "src": "The medical charity Mangola, Medecines Sans Frontieres and the World Health Organisation say it is the worst outbreak recorded in the country.",
+  "ref": "Медицинская благотворительная организация Мангола, Врачи без границ и Всемирная организация здравоохранения заявили, что это сильнейшая вспышка в истории страны.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-150-az",
+  "kind": "flores",
+  "lang": "az",
+  "src": "The medical charity Mangola, Medecines Sans Frontieres and the World Health Organisation say it is the worst outbreak recorded in the country.",
+  "ref": "Tibbi Xeyriyyə Qurumu olan Mangola, Medecines Sans Frontieres və ÜST bunun ölkədə bu günə qədər görülmüş ən pis epidemiya olduğunu bildirdi.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-150-hi",
+  "kind": "flores",
+  "lang": "hi",
+  "src": "The medical charity Mangola, Medecines Sans Frontieres and the World Health Organisation say it is the worst outbreak recorded in the country.",
+  "ref": "मेडिकल चैरिटी मैंगोला, मेडिसिन सेंस फ़्रंटियर और विश्व स्वास्थ्य संगठन का कहना है कि यह देश में दर्ज सबसे ख़राब प्रकोप है.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-200-tr",
+  "kind": "flores",
+  "lang": "tr",
+  "src": "They include the Netherlands, with Anna Jochemsen finishing ninth in the women's standing class in the Super-G yesterday, and Finland with Katja Saarinen finishing tenth in the same event.",
+  "ref": "Anna Jochemsen'in dün Super-G kadınlar ayakta sınıfında dokuzuncu bitirmesi ile Hollanda'yı ve aynı etkinlikte onuncu bitiren Katja Saarinen ile Finlandiya'yı içermektedir.",
+  "rated": true,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-200-zh",
+  "kind": "flores",
+  "lang": "zh",
+  "src": "They include the Netherlands, with Anna Jochemsen finishing ninth in the women's standing class in the Super-G yesterday, and Finland with Katja Saarinen finishing tenth in the same event.",
+  "ref": "与奖牌无缘的运动员包括荷兰的安娜·乔彻姆森，她在昨天的女子站姿超级大回转比赛中获得第九名，芬兰的卡特娅·萨里宁则在同一比赛中获得第十名。",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-200-ru",
+  "kind": "flores",
+  "lang": "ru",
+  "src": "They include the Netherlands, with Anna Jochemsen finishing ninth in the women's standing class in the Super-G yesterday, and Finland with Katja Saarinen finishing tenth in the same event.",
+  "ref": "Они включают Нидерланды с Анной Йохемсен, которая вчера финишировала девятой в женском заезде стоя в супергигантском слаломе, а также Финляндию с Катей Сааринен, финишировавшей в том же состязании десятой.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-200-az",
+  "kind": "flores",
+  "lang": "az",
+  "src": "They include the Netherlands, with Anna Jochemsen finishing ninth in the women's standing class in the Super-G yesterday, and Finland with Katja Saarinen finishing tenth in the same event.",
+  "ref": "Dünənki böyük slalom yarışlarında qadınlar sinfində iştirak edənlər arasında Hollandiyanı təmsil edən Anna Koxemsen 9-cu yerdə, Finlandiyanı təmsil edən Katya Saarinen isə 10-cu yerdə qərarlaşıb.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-200-hi",
+  "kind": "flores",
+  "lang": "hi",
+  "src": "They include the Netherlands, with Anna Jochemsen finishing ninth in the women's standing class in the Super-G yesterday, and Finland with Katja Saarinen finishing tenth in the same event.",
+  "ref": "वे नीदरलैंड में शामिल हैं, जो अन्ना जोचेमसेन के साथ कल सुपर-जी में महिलाओं के स्टैंडिंग क्लास में नौवें स्थान पर रहा और फ़िनलैंड उसी प्रतियोगिता में काटजा सरीनन के साथ दसवें स्थान पर रहा.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-250-tr",
+  "kind": "flores",
+  "lang": "tr",
+  "src": "Hokuriku Electric Power Co. reported no effects from the earthquake and that the Number 1 and 2 reactors at its Shika nuclear power plant were shut down.",
+  "ref": "Hokuriku Electric Power Co., sarsıntının herhangi bir zarar vermediğini ve Shika nükleer santralindeki 1 ve 2 Numaralı reaktörlerin çalışmasının durdurulduğunu belirtti.",
+  "rated": true,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-250-zh",
+  "kind": "flores",
+  "lang": "zh",
+  "src": "Hokuriku Electric Power Co. reported no effects from the earthquake and that the Number 1 and 2 reactors at its Shika nuclear power plant were shut down.",
+  "ref": "北陆电力株式会社报道称，志贺核能发电厂 1 号和 2 号反应堆已经关闭，地震并未造成影响。",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-250-ru",
+  "kind": "flores",
+  "lang": "ru",
+  "src": "Hokuriku Electric Power Co. reported no effects from the earthquake and that the Number 1 and 2 reactors at its Shika nuclear power plant were shut down.",
+  "ref": "Hokuriku Electric Power Co. сообщила об отсутствии каких-либо последствий землетрясения, а также о том, что реакторы № 1 и № 2 на её атомной электростанции \"Сика\" были остановлены.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-250-az",
+  "kind": "flores",
+  "lang": "az",
+  "src": "Hokuriku Electric Power Co. reported no effects from the earthquake and that the Number 1 and 2 reactors at its Shika nuclear power plant were shut down.",
+  "ref": "\"Hokuriku Electric Power Co\" şirkəti zəlzələnin heç bir təsiri olmadığını və Şika atom stansiyasındakı 1 və 2 nömrəli reaktorların bağlandığını bildirdi.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-250-hi",
+  "kind": "flores",
+  "lang": "hi",
+  "src": "Hokuriku Electric Power Co. reported no effects from the earthquake and that the Number 1 and 2 reactors at its Shika nuclear power plant were shut down.",
+  "ref": "होकूरिकू इलेक्ट्रिक पॉवर कंपनी ने रिपोर्ट दी कि भूकंप का कोई असर नहीं हुआ है. यह भी बताया कि इसके शिका न्यूक्लियर पावर प्लांट के रिएक्टर नंबर 1 और 2 बंद कर दिए गए थे.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-300-tr",
+  "kind": "flores",
+  "lang": "tr",
+  "src": "The commission was Martelly's response to widespread anti-regime protests that started in October.",
+  "ref": "Martelly, ekim ayında başlayan ve katılımın yüksek olduğu rejim karşıtı gösterilere bu komisyonla yanıt verdi.",
+  "rated": true,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-300-zh",
+  "kind": "flores",
+  "lang": "zh",
+  "src": "The commission was Martelly's response to widespread anti-regime protests that started in October.",
+  "ref": "该委员会是马尔泰利 (Martelly) 对始于 10 月份的大规模反政府抗议活动做出的回应。",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-300-ru",
+  "kind": "flores",
+  "lang": "ru",
+  "src": "The commission was Martelly's response to widespread anti-regime protests that started in October.",
+  "ref": "Комиссия стала ответом Мартелли на массовые протесты против государственного режима, начавшиеся в октябре.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-300-az",
+  "kind": "flores",
+  "lang": "az",
+  "src": "The commission was Martelly's response to widespread anti-regime protests that started in October.",
+  "ref": "Oktyabr ayında başlayıb geniş yayılan anti-rejim etirazçılarına Martelli komissiya ilə cavab verdi.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-300-hi",
+  "kind": "flores",
+  "lang": "hi",
+  "src": "The commission was Martelly's response to widespread anti-regime protests that started in October.",
+  "ref": "अक्टूबर में शुरू हुए व्यापक शासन विरोधी प्रदर्शनों के लिए आयोग का गठन मार्टेली की प्रतिक्रिया स्वरूप हुआ था.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-350-tr",
+  "kind": "flores",
+  "lang": "tr",
+  "src": "The cities of Harappa and Mohenjo-daro had a flush toilet in almost every house, attached to a sophisticated sewage system.",
+  "ref": "Harappa ve Mohenjo-daro şehirlerinin hemen hemen her evi sofistike bir kanalizasyon sistemine bağlı bir sifonlu tuvalete sahipti.",
+  "rated": true,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-350-zh",
+  "kind": "flores",
+  "lang": "zh",
+  "src": "The cities of Harappa and Mohenjo-daro had a flush toilet in almost every house, attached to a sophisticated sewage system.",
+  "ref": "哈拉帕 (Harappa) 和摩亨佐-达罗 (Mohenjo-daro) 这两个城市几乎每家每户都有抽水马桶，这些马桶与精密的污水处理系统相连。",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-350-ru",
+  "kind": "flores",
+  "lang": "ru",
+  "src": "The cities of Harappa and Mohenjo-daro had a flush toilet in almost every house, attached to a sophisticated sewage system.",
+  "ref": "Почти в каждом доме городов Хараппа и Мохенджо-Даро был туалет со смывом, подключённый к сложной канализационной системе.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-350-az",
+  "kind": "flores",
+  "lang": "az",
+  "src": "The cities of Harappa and Mohenjo-daro had a flush toilet in almost every house, attached to a sophisticated sewage system.",
+  "ref": "Mürəkkəb bir kanalizasiya sisteminə qoşulu sifonlu tualetlər Harappa və Mohenjo-daro şəhərlərinin demək olar ki, bütün evləri üçün səciyyəvi xüsusiyyətdir.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-350-hi",
+  "kind": "flores",
+  "lang": "hi",
+  "src": "The cities of Harappa and Mohenjo-daro had a flush toilet in almost every house, attached to a sophisticated sewage system.",
+  "ref": "हड़प्पा और मोहन-जोदड़ो के शहरों में लगभग हर घर में एक फ़्लश शौचालय था, जो एक परिष्कृत सीवेज सिस्टम से जुड़ा था.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-400-tr",
+  "kind": "flores",
+  "lang": "tr",
+  "src": "Though each country was 'Scandinavian', there were many differences between the people, kings, customs and history of Denmark, Sweden, Norway and Iceland.",
+  "ref": "Her ülke 'İskandinav' olsa da, Danimarka, İsveç, Norveç ve İzlanda halkları, kralları, gelenekleri ve tarihleri arasında birçok fark vardı.",
+  "rated": true,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-400-zh",
+  "kind": "flores",
+  "lang": "zh",
+  "src": "Though each country was 'Scandinavian', there were many differences between the people, kings, customs and history of Denmark, Sweden, Norway and Iceland.",
+  "ref": "虽然均隶属于“斯堪的纳维亚”，但丹麦、瑞典、挪威和冰岛的民众、国王、习俗和历史之间存在着许多差异。",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-400-ru",
+  "kind": "flores",
+  "lang": "ru",
+  "src": "Though each country was 'Scandinavian', there were many differences between the people, kings, customs and history of Denmark, Sweden, Norway and Iceland.",
+  "ref": "Хотя каждая из стран была скандинавской, существовало много различий между народами, правителями, традициями и историей Дании, Швеции, Норвегии и Исландии.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-400-az",
+  "kind": "flores",
+  "lang": "az",
+  "src": "Though each country was 'Scandinavian', there were many differences between the people, kings, customs and history of Denmark, Sweden, Norway and Iceland.",
+  "ref": " Danimarka, İsveç, Norveç və İslandiya \"Skandinaviya\" ölkələridir, amma onların xalqları, kralları, adət-ənənələri və tarixi arasında bir çox fərqlər var.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-400-hi",
+  "kind": "flores",
+  "lang": "hi",
+  "src": "Though each country was 'Scandinavian', there were many differences between the people, kings, customs and history of Denmark, Sweden, Norway and Iceland.",
+  "ref": "हालाँकि हर देश 'स्कैंडिनेवियाई' था, लेकिन डेनमार्क, स्वीडन, नॉर्वे और आइसलैंड के लोगों, राजाओं, रीति-रिवाजों और इतिहास के बीच कई अंतर थे.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-450-tr",
+  "kind": "flores",
+  "lang": "tr",
+  "src": "Ancient China had a unique way of showing different time periods; each stage of China or each family that was in power was a distinctive dynasty.",
+  "ref": "Antik Çin, farklı zaman dönemlerini göstermek konusunda özgün bir yol izlemiştir; Çin'in her dönemi veya iktidardaki her aile ayrı bir hanedanlıktır.",
+  "rated": true,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-450-zh",
+  "kind": "flores",
+  "lang": "zh",
+  "src": "Ancient China had a unique way of showing different time periods; each stage of China or each family that was in power was a distinctive dynasty.",
+  "ref": "中国古代的不同时期各有特点；中国的每个时期或每个执掌天下的家族都是一个特点鲜明的王朝。",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-450-ru",
+  "kind": "flores",
+  "lang": "ru",
+  "src": "Ancient China had a unique way of showing different time periods; each stage of China or each family that was in power was a distinctive dynasty.",
+  "ref": "В древнем Китае использовали уникальный способ обозначения периодов времени; каждый этап Китая или каждая семья, находившаяся у власти, были особой династией.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-450-az",
+  "kind": "flores",
+  "lang": "az",
+  "src": "Ancient China had a unique way of showing different time periods; each stage of China or each family that was in power was a distinctive dynasty.",
+  "ref": "Qədim Çin, müxtəlif saat qurşaqlarını özünəməxsus bir formada göstərirdi. Çinin hər mərhələsi, yaxud da iqtidarda olan hər ailə özünəməxsus bir xanədan idi.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-450-hi",
+  "kind": "flores",
+  "lang": "hi",
+  "src": "Ancient China had a unique way of showing different time periods; each stage of China or each family that was in power was a distinctive dynasty.",
+  "ref": "प्राचीन चीन में अलग-अलग समय अवधि दिखाने का एक अनूठा तरीका था; चीन का प्रत्येक चरण या प्रत्येक परिवार जो सत्ता में था, एक ख़ास राजवंश था.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-500-tr",
+  "kind": "flores",
+  "lang": "tr",
+  "src": "Subcultures can be distinctive because of the age, ethnicity, class, location, and/or gender of the members.",
+  "ref": "Üyelerin yaşı, etnik kökeni, sınıfı, yeri ve/veya cinsiyeti nedeniyle alt kültürler ayırt edici olabilir.",
+  "rated": true,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-500-zh",
+  "kind": "flores",
+  "lang": "zh",
+  "src": "Subcultures can be distinctive because of the age, ethnicity, class, location, and/or gender of the members.",
+  "ref": "鉴于成员的年龄、种族、阶级、位置以及/或性别差异，亚文化可能会各具特色。",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-500-ru",
+  "kind": "flores",
+  "lang": "ru",
+  "src": "Subcultures can be distinctive because of the age, ethnicity, class, location, and/or gender of the members.",
+  "ref": "Meжду субкультурами возможны различия, обусловленные возрастом, национальностью, социальным статусом, местом проживания и/или половой принадлежностью людей, из которых она состоит.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-500-az",
+  "kind": "flores",
+  "lang": "az",
+  "src": "Subcultures can be distinctive because of the age, ethnicity, class, location, and/or gender of the members.",
+  "ref": "Yaş, etnik mənsubiyyət, sinif, yer və/və ya üzvlərin cinsi mənsubiyyəti alt mədəniyyətləri fərqləndirən amillərdir.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-500-hi",
+  "kind": "flores",
+  "lang": "hi",
+  "src": "Subcultures can be distinctive because of the age, ethnicity, class, location, and/or gender of the members.",
+  "ref": "सदस्यों की आयु, नस्ल, वर्ग, स्थान, और/या लिंग की वजह से उपसंस्कृतियों में अंतर हो सकता है.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-550-tr",
+  "kind": "flores",
+  "lang": "tr",
+  "src": "The job of navies has traditionally been to ensure that your country maintains the ability to move your people and goods, while at the same time, interfering with your enemy's ability to move his people and goods.",
+  "ref": "Donanmaların görevi geleneksel olarak bir yandan ülkenizin, halkınızı ve mallarınızı taşıma kabiliyetini korumak, bir yandan da düşmanın halkını ve mallarını taşıma kabiliyetine müdahale etmesini sağlamak olagelmiştir.",
+  "rated": true,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-550-zh",
+  "kind": "flores",
+  "lang": "zh",
+  "src": "The job of navies has traditionally been to ensure that your country maintains the ability to move your people and goods, while at the same time, interfering with your enemy's ability to move his people and goods.",
+  "ref": "从传统意义上讲，海军的任务是确保国家保持运输人员和货物的能力，同时，干扰敌人运输其人员和货物的能力。",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-550-ru",
+  "kind": "flores",
+  "lang": "ru",
+  "src": "The job of navies has traditionally been to ensure that your country maintains the ability to move your people and goods, while at the same time, interfering with your enemy's ability to move his people and goods.",
+  "ref": "Работа моряков традиционно заключается в том, чтобы обеспечивать способность страны перемещать свои народ и товары, а также одновременно препятствовать возможности врага перемещать свои народ и товары.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-550-az",
+  "kind": "flores",
+  "lang": "az",
+  "src": "The job of navies has traditionally been to ensure that your country maintains the ability to move your people and goods, while at the same time, interfering with your enemy's ability to move his people and goods.",
+  "ref": "Ənənəvi olaraq donanmaların işi ölkənizin öz xalqının və mallarının daşınması qabiliyyətini qorumaqla bərabər, eyni zamanda düşmənin öz adamlarını və mallarını daşımasına müdaxilə etməkdən ibarət olub.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-550-hi",
+  "kind": "flores",
+  "lang": "hi",
+  "src": "The job of navies has traditionally been to ensure that your country maintains the ability to move your people and goods, while at the same time, interfering with your enemy's ability to move his people and goods.",
+  "ref": "नौसेनाओं का काम पारंपरिक रूप से यह है कि अपने देश के लोगों और सामान को एक स्थान से दूसरे स्थानांतरण करने की क्षमता बनाए रखे ,और साथ ही अपने दुश्मन देश की लोगों और सामान को स्थानांतरण करने की क्षमता में हस्तक्षेप कर सकें |",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-600-tr",
+  "kind": "flores",
+  "lang": "tr",
+  "src": "Hershey and Chase used phages, or viruses, to implant their own DNA into a bacterium.",
+  "ref": "Hershey ve Chase, kendilerine ait DNA'ları bir bakteriye implantasyon yöntemi ile yerleştirmek amacıyla faj ve virüslerden yararlandı.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-600-zh",
+  "kind": "flores",
+  "lang": "zh",
+  "src": "Hershey and Chase used phages, or viruses, to implant their own DNA into a bacterium.",
+  "ref": "赫尔希和蔡斯利用噬菌体或病毒，将他们自己的 DNA 植入到细菌之中。",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-600-ru",
+  "kind": "flores",
+  "lang": "ru",
+  "src": "Hershey and Chase used phages, or viruses, to implant their own DNA into a bacterium.",
+  "ref": "Херши с Чейзом имплантировали свою ДНК в бактерию с помощью фагов, т. е. вирусов.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-600-az",
+  "kind": "flores",
+  "lang": "az",
+  "src": "Hershey and Chase used phages, or viruses, to implant their own DNA into a bacterium.",
+  "ref": "DNT-lərini bakteriyaya yeritmək üçün Herşi və Çeyz bakteriofaqlardan və ya viruslardan istifadə etdi.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-600-hi",
+  "kind": "flores",
+  "lang": "hi",
+  "src": "Hershey and Chase used phages, or viruses, to implant their own DNA into a bacterium.",
+  "ref": "हर्शे और चेज़ ने अपने डीएनए को एक जीवाणु में डालने के लिए फेज या वायरस का इस्तेमाल किया.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-650-tr",
+  "kind": "flores",
+  "lang": "tr",
+  "src": "The surface of the Moon is made of rocks and dust. The outer layer of the Moon is called the crust.",
+  "ref": "Ay'ın yüzeyi kayalardan ve tozdan oluşur. Ay'ın dış katmanına kabuk ismi verilir.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-650-zh",
+  "kind": "flores",
+  "lang": "zh",
+  "src": "The surface of the Moon is made of rocks and dust. The outer layer of the Moon is called the crust.",
+  "ref": "月球的表面由岩石和灰尘组成。月球的外层叫做地壳。",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-650-ru",
+  "kind": "flores",
+  "lang": "ru",
+  "src": "The surface of the Moon is made of rocks and dust. The outer layer of the Moon is called the crust.",
+  "ref": "Поверхность Луны состоит из камней и пыли. Внешний слой Луны называется корой.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-650-az",
+  "kind": "flores",
+  "lang": "az",
+  "src": "The surface of the Moon is made of rocks and dust. The outer layer of the Moon is called the crust.",
+  "ref": "Ayın səthi qayalardan və tozdan ibarətdir və onun xarici qatına qabıq deyilir.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-650-hi",
+  "kind": "flores",
+  "lang": "hi",
+  "src": "The surface of the Moon is made of rocks and dust. The outer layer of the Moon is called the crust.",
+  "ref": "चांद की सतह चट्टानों और धूल से बनी है. चांद की बाहरी परत को क्रस्ट कहते हैं.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-700-tr",
+  "kind": "flores",
+  "lang": "tr",
+  "src": "The Arabs also brought Islam to the lands, and it took in a big way in the Comoros and Mayotte.",
+  "ref": "Araplar aynı zamanda bu topraklara İslam'ı getirdi ve Komorolarda ve Mayotte'ta çok yaygınlaştı.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-700-zh",
+  "kind": "flores",
+  "lang": "zh",
+  "src": "The Arabs also brought Islam to the lands, and it took in a big way in the Comoros and Mayotte.",
+  "ref": "阿拉伯人也把伊斯兰教带到了这片土地，这一教义在科摩罗和马约特国家盛行。",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-700-ru",
+  "kind": "flores",
+  "lang": "ru",
+  "src": "The Arabs also brought Islam to the lands, and it took in a big way in the Comoros and Mayotte.",
+  "ref": "Арабы также принесли в этот регион ислам, особенно он укоренился на Коморах и Майотте.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-700-az",
+  "kind": "flores",
+  "lang": "az",
+  "src": "The Arabs also brought Islam to the lands, and it took in a big way in the Comoros and Mayotte.",
+  "ref": "Ərəblərin bu torpaqlara gətirdiyi İslam dini Qəmər adaları və Mayottaya qədər yayıldı.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-700-hi",
+  "kind": "flores",
+  "lang": "hi",
+  "src": "The Arabs also brought Islam to the lands, and it took in a big way in the Comoros and Mayotte.",
+  "ref": "अरब के लोग इस धरती पर इस्लाम भी लेकर आए, और उसे कोमोरोस और मेयोटे में बड़े पैमाने पर फैलाया.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-750-tr",
+  "kind": "flores",
+  "lang": "tr",
+  "src": "Argentina is well known for having one of the best polo teams and players in the world.",
+  "ref": "Arjantin, dünyanın en iyi polo takımlarından birine ve en iyi oyunculara sahip olmakla meşhurdur.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-800-tr",
+  "kind": "flores",
+  "lang": "tr",
+  "src": "They usually have special food, drink and entertainment offers, to keep guests in a good mood, and keep them at the premise.",
+  "ref": "Misafirleri iyi bir ruh halinde tutmak ve hoşnut etmek için genellikle özel olarak hazırlanan yiyecek, içecek ve eğlence ikramları olur.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-850-tr",
+  "kind": "flores",
+  "lang": "tr",
+  "src": "Skiing is a major travelling activity with many enthusiasts, occasionally known as \"ski bums,\" planning entire vacations around skiing at a particular location.",
+  "ref": "Kayak \"kayak müptelaları\" olarak da adlandırılan ve belirli bir yerde kayak yapmak için bütün tatillerini planlayan pek çok meraklısı için önemli bir seyahat aktivitesidir.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-900-tr",
+  "kind": "flores",
+  "lang": "tr",
+  "src": "Usually you always here the sound of tourists and vendors. The story of the sound and light is just like a story book.",
+  "ref": "Genellikle turistlerin ve satıcıların sesini her zaman duyarsınız. Sesin ve ışığın hikayesi bir hikaye kitabı gibidir.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "flores-950-tr",
+  "kind": "flores",
+  "lang": "tr",
+  "src": "Also to the north visit the great Sanctuary of Our Lady of Fatima (Shrine), a place of worldwide famous Marian apparitions.",
+  "ref": "Ayrıca kuzeyde, dünyaca ünlü Meryem'in görüntüsünün gerçekleştiği bir yer olan büyük Fatima Meryem Ana Tapınağı'nı (Tapınak) ziyaret edin.",
+  "rated": false,
+  "source": "FLORES-200 devtest (CC BY-SA 4.0)"
+ },
+ {
+  "id": "wiki-Hash table",
+  "kind": "wiki",
+  "lang": "tr",
+  "src": "In computer science, a hash table is a data structure that implements an associative array, also called a dictionary or simply map; an associative array is an abstract data type that maps keys to values. A hash table uses a hash function to compute an index, also called a hash code, into an array of buckets or slots, from which the desired value can be found. During lookup, the key is hashed and the resulting hash indicates where the corresponding value is stored. A map implemented by a hash table is called a hash map.",
+  "rated": true,
+  "source": "Wikipedia (CC BY-SA 4.0): https://en.wikipedia.org/w/index.php?title=Hash_table&oldid=1376684313"
+ },
+ {
+  "id": "wiki-Transmission Control Protocol",
+  "kind": "wiki",
+  "lang": "tr",
+  "src": "The Transmission Control Protocol (TCP) is one of the main protocols of the Internet protocol suite, providing reliable, ordered, and error-checked delivery of a stream of octets (bytes) between applications running on hosts communicating via an IP network. It originated in the initial network implementation in which it complemented the Internet Protocol (IP). Therefore, the entire suite is commonly referred to as TCP/IP.",
+  "rated": true,
+  "source": "Wikipedia (CC BY-SA 4.0): https://en.wikipedia.org/w/index.php?title=Transmission_Control_Protocol&oldid=1374313347"
+ },
+ {
+  "id": "wiki-Garbage collection (computer science)",
+  "kind": "wiki",
+  "lang": "tr",
+  "src": "In computer science, garbage collection (GC) is a form of automatic memory management. The garbage collector attempts to reclaim memory that was allocated by the program, but is no longer referenced; such memory is called garbage. Garbage collection was invented by American computer scientist John McCarthy around 1959 to simplify manual memory management in Lisp.",
+  "rated": true,
+  "source": "Wikipedia (CC BY-SA 4.0): https://en.wikipedia.org/w/index.php?title=Garbage_collection_(computer_science)&oldid=1373231348"
+ },
+ {
+  "id": "page",
+  "kind": "page",
+  "lang": "tr",
+  "src": "In computing, a compiler is software that translates computer code written in one programming language (the source language) into another language (the target language). The name \"compiler\" is primarily used for programs that translate source code from a high-level programming language to a low-level programming language (e.g., assembly language, object code, or machine code) to create an executable program.\n\nThere are many different types of compilers which produce output in different useful forms. A cross-compiler produces code for a different central processing unit (CPU) or operating system than the one on which the cross-compiler itself runs. A bootstrap compiler is often a temporary compiler, used for compiling a more permanent or better optimized compiler for a language.\n\nRelated software include decompilers, programs that translate from low-level languages to higher-level ones; programs that translate between high-level languages, usually called source-to-source compilers or transpilers; language rewriters, usually programs that translate the form of expressions without a change of language; and compiler-compilers, compilers that produce compilers (or parts of them), often in a generic and reusable way so as to be able to produce many differing compilers.\n\nA compiler is likely to perform some or all of the following operations, often called phases: preprocessing, lexical analysis, parsing, semantic analysis (syntax-directed translation), conversion of input programs to an intermediate representation, code optimization and machine specific code generation. Compilers generally implement these phases as modular components, promoting efficient design and correctness of transformations of source input to target output. Program faults caused by incorrect compiler behavior can be very difficult to track down and work around; therefore, compiler implementers invest significant effort to ensure compiler correctness.\n\nWith respect to making source code runnable, an interpreter provides a similar function as a compiler, but via a different mechanism. An interpreter executes code without converting it to machine code. Therefore, some interpreters execute source code while others execute an intermediate form such as bytecode.\n\nLow-level programming languages, such as assembly and C, are typically compiled, especially when speed is a significant concern, rather than having cross-platform support. For such languages, there are more one-to-one correspondences between the source code and the resulting machine code, making it easier for programmers to control the use of hardware.\n\nIn theory, any programming language can be used via either a compiler or an interpreter, but in practice, languages tend to be used with only one or the other. Nonetheless, it is possible to write a compiler for a language that is commonly interpreted. For example, Common Lisp can be compiled to Java bytecode (and then interpreted by the Java virtual machine), to C code (which can then be compiled again to native machine code), or directly to native code.\n\nTheoretical computing concepts developed by scientists, mathematicians, and engineers formed the basis of digital modern computing development during World War II. Primitive binary languages evolved because digital devices only understand ones and zeros and the circuit patterns in the underlying machine architecture. In the late 1940s, assembly languages were created to offer a more workable abstraction of the computer architectures. Limited memory capacity of early computers led to substantial technical challenges when the first compilers were designed. Therefore, the compiling process needed to be divided into several small programs. The front end programs produce the analysis products used by the back end programs to generate target code. As computer technology provided more resources, compiler designs could align better with the compiling process.",
+  "words": 570,
+  "rated": false,
+  "source": "Wikipedia (CC BY-SA 4.0): https://en.wikipedia.org/w/index.php?title=Compiler&oldid=1373605841"
+ },
+ {
+  "id": "syn-0",
+  "kind": "synthetic",
+  "lang": "tr",
+  "src_marked": "Run [[pip install requests]] before importing the library.",
+  "keep": [
+   "pip install requests"
+  ],
+  "rated": true,
+  "source": "Synthetic, written for this project"
+ },
+ {
+  "id": "syn-1",
+  "kind": "synthetic",
+  "lang": "tr",
+  "src_marked": "The function [[parse_config()]] returns [[None]] if the file is missing.",
+  "keep": [
+   "parse_config()",
+   "None"
+  ],
+  "rated": true,
+  "source": "Synthetic, written for this project"
+ },
+ {
+  "id": "syn-2",
+  "kind": "synthetic",
+  "lang": "tr",
+  "src_marked": "See [[https://docs.python.org/3/library/json.html]] for the full list of options.",
+  "keep": [
+   "https://docs.python.org/3/library/json.html"
+  ],
+  "rated": false,
+  "source": "Synthetic, written for this project"
+ },
+ {
+  "id": "syn-3",
+  "kind": "synthetic",
+  "lang": "tr",
+  "src_marked": "Python's [[list.sort()]] method sorts the list in place and is stable.",
+  "keep": [
+   "list.sort()"
+  ],
+  "rated": true,
+  "source": "Synthetic, written for this project"
+ },
+ {
+  "id": "syn-4",
+  "kind": "synthetic",
+  "lang": "tr",
+  "src_marked": "Set the environment variable [[PYTHONPATH]] to include the [[src/]] directory.",
+  "keep": [
+   "PYTHONPATH",
+   "src/"
+  ],
+  "rated": false,
+  "source": "Synthetic, written for this project"
+ },
+ {
+  "id": "syn-5",
+  "kind": "synthetic",
+  "lang": "tr",
+  "src_marked": "The time complexity of binary search is [[O(log n)]], compared to [[O(n)]] for linear search.",
+  "keep": [
+   "O(log n)",
+   "O(n)"
+  ],
+  "rated": true,
+  "source": "Synthetic, written for this project"
+ },
+ {
+  "id": "syn-6",
+  "kind": "synthetic",
+  "lang": "tr",
+  "src_marked": "Einstein's equation [[E = mc^2]] relates mass and energy.",
+  "keep": [
+   "E = mc^2"
+  ],
+  "rated": false,
+  "source": "Synthetic, written for this project"
+ },
+ {
+  "id": "syn-7",
+  "kind": "synthetic",
+  "lang": "tr",
+  "src_marked": "Linus Torvalds released the first version of Linux in 1991.",
+  "keep": [],
+  "rated": true,
+  "source": "Synthetic, written for this project"
+ },
+ {
+  "id": "syn-8",
+  "kind": "synthetic",
+  "lang": "tr",
+  "src_marked": "In the table, the column labeled Latency (ms) shows the median over 1,000 requests.",
+  "keep": [],
+  "rated": true,
+  "source": "Synthetic, written for this project"
+ },
+ {
+  "id": "syn-9",
+  "kind": "synthetic",
+  "lang": "tr",
+  "src_marked": "Throughput | Requests per second | Higher is better",
+  "keep": [],
+  "rated": false,
+  "source": "Synthetic, written for this project"
+ },
+ {
+  "id": "syn-10",
+  "kind": "synthetic",
+  "lang": "tr",
+  "src_marked": "Press [[Ctrl+C]] to stop the server, then run [[git status]] to check your changes.",
+  "keep": [
+   "Ctrl+C",
+   "git status"
+  ],
+  "rated": true,
+  "source": "Synthetic, written for this project"
+ },
+ {
+  "id": "syn-11",
+  "kind": "synthetic",
+  "lang": "tr",
+  "src_marked": "The class [[HttpClient]] wraps a connection pool and retries failed requests three times.",
+  "keep": [
+   "HttpClient"
+  ],
+  "rated": false,
+  "source": "Synthetic, written for this project"
+ },
+ {
+  "id": "syn-12",
+  "kind": "synthetic",
+  "lang": "tr",
+  "src_marked": "Kubernetes schedules pods onto nodes based on the resources they request.",
+  "keep": [],
+  "rated": false,
+  "source": "Synthetic, written for this project"
+ },
+ {
+  "id": "syn-13",
+  "kind": "synthetic",
+  "lang": "tr",
+  "src_marked": "If [[x > 0]], the loop exits; otherwise [[count]] is incremented by one.",
+  "keep": [
+   "x > 0",
+   "count"
+  ],
+  "rated": true,
+  "source": "Synthetic, written for this project"
+ },
+ {
+  "id": "syn-14",
+  "kind": "synthetic",
+  "lang": "tr",
+  "src_marked": "Donald Knuth's The Art of Computer Programming is often cited as a classic reference.",
+  "keep": [],
+  "rated": false,
+  "source": "Synthetic, written for this project"
+ }
+]

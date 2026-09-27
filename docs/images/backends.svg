@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" width="960" height="400" role="img" aria-labelledby="t d">
+  <title id="t">Choosing the inference backend</title>
+  <desc id="d">On first launch the app probes the hardware. NVIDIA GPUs use the CUDA build, Apple Silicon uses Metal, AMD and Intel GPUs use Vulkan, and machines without a usable GPU fall back to the CPU with a time warning. All run the same llama-server with Gemma-4-E4B and a number of parallel slots chosen by a speed test.</desc>
+  <style>
+    .card{fill:#f7f9fb;stroke:#d8dee6}
+    .box{fill:#ffffff;stroke:#c9d3de}
+    .hl{fill:#e3f0f5;stroke:#1c6a86}
+    .warn{fill:#fbf1dc;stroke:#b07a12}
+    .ink{fill:#1b2230}
+    .muted{fill:#5b6677}
+    .acc{fill:#1c6a86}
+    .wrn{fill:#8a5a00}
+    .line{stroke:#8795a6;fill:none}
+    .arrow{fill:#8795a6}
+    .tag{fill:#1c6a86}
+    .tagt{fill:#ffffff}
+    text{font-family:"Segoe UI",-apple-system,"Helvetica Neue",Arial,sans-serif}
+    .h{font-size:15px;font-weight:600}
+    .s{font-size:12px}
+    .xs{font-size:11px;letter-spacing:.06em}
+    @media (prefers-color-scheme:dark){
+      .card{fill:#0f141a;stroke:#2a323e}
+      .box{fill:#161c24;stroke:#2f3a47}
+      .hl{fill:#16303a;stroke:#6cc0dc}
+      .warn{fill:#2e2615;stroke:#e8b75a}
+      .ink{fill:#e4e8ee}
+      .muted{fill:#9aa4b4}
+      .acc{fill:#6cc0dc}
+      .wrn{fill:#e8b75a}
+      .line{stroke:#5c6878}
+      .arrow{fill:#5c6878}
+      .tag{fill:#6cc0dc}
+      .tagt{fill:#0f141a}
+    }
+  </style>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0L10 5L0 10z" class="arrow"/>
+    </marker>
+  </defs>
+
+  <rect class="card" x="1" y="1" width="958" height="398" rx="14"/>
+  <text class="xs acc" x="24" y="32">ONE APP, THE RIGHT ENGINE FOR EACH MACHINE</text>
+
+  <!-- probe -->
+  <rect class="box" x="20" y="150" width="200" height="104" rx="10"/>
+  <text class="h ink" x="38" y="178">Hardware probe</text>
+  <text class="s muted" x="38" y="204">GPU vendor &amp; memory</text>
+  <text class="s muted" x="38" y="224">on first launch</text>
+
+  <!-- fan out -->
+  <path class="line" stroke-width="1.6" marker-end="url(#a)" d="M220 202C260 202 260 84 296 84"/>
+  <path class="line" stroke-width="1.6" marker-end="url(#a)" d="M220 202C260 202 260 164 296 164"/>
+  <path class="line" stroke-width="1.6" marker-end="url(#a)" d="M220 202C260 202 260 244 296 244"/>
+  <path class="line" stroke-width="1.6" marker-end="url(#a)" d="M220 202C260 202 260 324 296 324"/>
+
+  <!-- conditions -->
+  <rect class="box" x="300" y="58" width="190" height="52" rx="10"/>
+  <text class="h ink" x="318" y="89">NVIDIA GPU</text>
+  <rect class="box" x="300" y="138" width="190" height="52" rx="10"/>
+  <text class="h ink" x="318" y="169">Apple Silicon Mac</text>
+  <rect class="box" x="300" y="218" width="190" height="52" rx="10"/>
+  <text class="h ink" x="318" y="249">AMD · Intel GPU</text>
+  <rect class="box" x="300" y="298" width="190" height="52" rx="10"/>
+  <text class="h ink" x="318" y="329">No usable GPU</text>
+
+  <path class="line" stroke-width="1.6" marker-end="url(#a)" d="M492 84H526"/>
+  <path class="line" stroke-width="1.6" marker-end="url(#a)" d="M492 164H526"/>
+  <path class="line" stroke-width="1.6" marker-end="url(#a)" d="M492 244H526"/>
+  <path class="line" stroke-width="1.6" marker-end="url(#a)" d="M492 324H526"/>
+
+  <!-- backends -->
+  <rect class="hl" x="530" y="58" width="220" height="52" rx="10"/>
+  <text class="h ink" x="548" y="81">CUDA</text>
+  <text class="s muted" x="548" y="99">runtime downloaded on first run</text>
+  <rect class="hl" x="530" y="138" width="220" height="52" rx="10"/>
+  <text class="h ink" x="548" y="161">Metal</text>
+  <text class="s muted" x="548" y="179">built into macOS</text>
+  <rect class="hl" x="530" y="218" width="220" height="52" rx="10"/>
+  <text class="h ink" x="548" y="241">Vulkan</text>
+  <text class="s muted" x="548" y="259">works with any modern driver</text>
+  <rect class="warn" x="530" y="298" width="220" height="52" rx="10"/>
+  <text class="h ink" x="548" y="321">CPU</text>
+  <text class="s wrn" x="548" y="339">slow: shows a time estimate first</text>
+
+  <!-- converge -->
+  <path class="line" stroke-width="1.6" d="M750 84C780 84 780 202 800 202"/>
+  <path class="line" stroke-width="1.6" d="M750 164C780 164 780 202 800 202"/>
+  <path class="line" stroke-width="1.6" d="M750 244C780 244 780 202 800 202"/>
+  <path class="line" stroke-width="1.6" d="M750 324C780 324 780 202 800 202"/>
+  <path class="line" stroke-width="1.6" marker-end="url(#a)" d="M798 202H806"/>
+
+  <!-- server -->
+  <rect class="box" x="810" y="132" width="130" height="140" rx="10"/>
+  <text class="h ink" x="826" y="160">llama-server</text>
+  <text class="s muted" x="826" y="184">Gemma-4-E4B</text>
+  <rect class="tag" x="826" y="200" width="98" height="22" rx="11"/>
+  <text class="s tagt" x="875" y="215" text-anchor="middle">N slots</text>
+  <text class="s muted" x="826" y="244">set by a 30 s</text>
+  <text class="s muted" x="826" y="262">speed test</text>
+</svg>

@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 230" width="960" height="230" role="img" aria-labelledby="t d">
+  <title id="t">First launch</title>
+  <desc id="d">Install a small app without a model, probe the hardware, download the model once (plus the CUDA runtime on NVIDIA), run a 30-second speed test that sets the number of parallel slots, then show a time estimate for every book.</desc>
+  <style>
+    .card{fill:#f7f9fb;stroke:#d8dee6}
+    .dot{fill:#ffffff;stroke:#1c6a86}
+    .done{fill:#1c6a86;stroke:#1c6a86}
+    .ink{fill:#1b2230}
+    .muted{fill:#5b6677}
+    .acc{fill:#1c6a86}
+    .num{fill:#1c6a86}
+    .numd{fill:#ffffff}
+    .track{stroke:#c9d3de}
+    text{font-family:"Segoe UI",-apple-system,"Helvetica Neue",Arial,sans-serif}
+    .h{font-size:15px;font-weight:600}
+    .s{font-size:12px}
+    .xs{font-size:11px;letter-spacing:.06em}
+    .n{font-size:14px;font-weight:700}
+    @media (prefers-color-scheme:dark){
+      .card{fill:#0f141a;stroke:#2a323e}
+      .dot{fill:#161c24;stroke:#6cc0dc}
+      .done{fill:#6cc0dc;stroke:#6cc0dc}
+      .ink{fill:#e4e8ee}
+      .muted{fill:#9aa4b4}
+      .acc{fill:#6cc0dc}
+      .num{fill:#6cc0dc}
+      .numd{fill:#0f141a}
+      .track{stroke:#2f3a47}
+    }
+  </style>
+
+  <rect class="card" x="1" y="1" width="958" height="228" rx="14"/>
+  <text class="xs acc" x="24" y="32">FIRST LAUNCH — ONE CLICK, NO TECHNICAL SETUP</text>
+
+  <line class="track" x1="100" y1="84" x2="860" y2="84" stroke-width="3"/>
+
+  <g text-anchor="middle">
+    <circle class="dot" cx="100" cy="84" r="18" stroke-width="2"/><text class="n num" x="100" y="89">1</text>
+    <text class="h ink" x="100" y="130">Install</text>
+    <text class="s muted" x="100" y="152">small installer,</text>
+    <text class="s muted" x="100" y="170">no model inside</text>
+
+    <circle class="dot" cx="290" cy="84" r="18" stroke-width="2"/><text class="n num" x="290" y="89">2</text>
+    <text class="h ink" x="290" y="130">Hardware probe</text>
+    <text class="s muted" x="290" y="152">GPU vendor &amp; memory</text>
+    <text class="s muted" x="290" y="170">→ picks the engine</text>
+
+    <circle class="dot" cx="480" cy="84" r="18" stroke-width="2"/><text class="n num" x="480" y="89">3</text>
+    <text class="h ink" x="480" y="130">Download once</text>
+    <text class="s muted" x="480" y="152">Gemma-4-E4B, ≈ 4.6 GB</text>
+    <text class="s muted" x="480" y="170">+ CUDA runtime on NVIDIA</text>
+
+    <circle class="dot" cx="670" cy="84" r="18" stroke-width="2"/><text class="n num" x="670" y="89">4</text>
+    <text class="h ink" x="670" y="130">Speed test</text>
+    <text class="s muted" x="670" y="152">30 seconds</text>
+    <text class="s muted" x="670" y="170">→ sets parallel slots</text>
+
+    <circle class="done" cx="860" cy="84" r="18" stroke-width="2"/><text class="n numd" x="860" y="89">✓</text>
+    <text class="h ink" x="860" y="130">Ready</text>
+    <text class="s muted" x="860" y="152">time estimate</text>
+    <text class="s muted" x="860" y="170">for every book</text>
+  </g>
+
+  <text class="s muted" x="480" y="206" text-anchor="middle">Adding your own .gguf model is possible under Advanced settings.</text>
+</svg>
