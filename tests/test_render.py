@@ -78,6 +78,17 @@ def test_list_items_keep_their_markers(tmp_path):
     assert "a. üç" in html
 
 
+def test_running_headers_and_figure_labels_are_not_in_reflowed_output(tmp_path):
+    book = Book(source="x.pdf", title="t", blocks=[
+        Block("b0", "header", "1.1 Background 9", 1), Block("b1", "figure", "axis label", 1),
+        Block("b2", "paragraph", "Body.", 1)])
+    text = pymupdf.open(write_pdf(book, {}, tmp_path / "o.pdf", lang="en"))[0].get_text()
+    assert "Background 9" not in text and "axis label" not in text and "Body." in text
+    with zipfile.ZipFile(write_epub(book, {}, tmp_path / "o.epub", lang="en")) as z:
+        html = "".join(z.read(n).decode() for n in z.namelist() if "chap" in n)
+    assert "Background 9" not in html and "axis label" not in html
+
+
 def test_pdf_has_a_bookmark_per_chapter(tmp_path):
     out = write_pdf(BOOK, TR, tmp_path / "out.pdf", lang="tr")
     assert [t[1] for t in pymupdf.open(out).get_toc()] == ["Bölüm 1: Hash Tabloları", "Bölüm 2: Ağaçlar"]

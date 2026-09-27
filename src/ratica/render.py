@@ -10,7 +10,7 @@ from pathlib import Path
 import pymupdf
 from ebooklib import epub
 
-from .docmodel import Book
+from .docmodel import ONLY_IN_PAGE_LAYOUT, Book
 
 PAGE = pymupdf.Rect(0, 0, 504, 684)  # 7 x 9.5 inches, a common technical-book trim
 MARGIN = 54
@@ -54,6 +54,11 @@ def _block_html(block, text: str, image_dir: str = "") -> str:
     return f"<p>{t}</p>"
 
 
+def _reflowable(book: Book):
+    """Blocks that belong in a reflowed book: not running headers or text inside figures."""
+    return [b for b in book.blocks if b.kind not in ONLY_IN_PAGE_LAYOUT]
+
+
 def _text(block, translations) -> str:
     return translations.get(block.id, block.text)
 
@@ -66,7 +71,7 @@ def write_pdf(book: Book, translations: dict[str, str], path, lang: str) -> Path
     for b in book.blocks:
         if b.kind == "image":
             archive.add(b.image, _image_name(b))
-    body = "".join(_block_html(b, _text(b, translations)) for b in book.blocks)
+    body = "".join(_block_html(b, _text(b, translations)) for b in _reflowable(book))
     story = pymupdf.Story(html=f"<html lang='{lang}'><body>{body}</body></html>", user_css=CSS, archive=archive)
 
     headings = []
@@ -110,7 +115,7 @@ def write_epub(book: Book, translations: dict[str, str], path, lang: str) -> Pat
 
     # One chapter per top-level heading; anything before the first heading opens the book.
     chapters, current = [], None
-    for b in book.blocks:
+    for b in _reflowable(book):
         if current is None or (b.kind == "heading" and b.level == 1 and current["blocks"]):
             current = {"title": None, "blocks": []}
             chapters.append(current)

@@ -8,9 +8,9 @@ def kinds(book):
 
 
 def test_heading_is_detected_by_font_size(book_pdf):
-    book = extract(book_pdf)
-    assert book.blocks[0].kind == "heading"
-    assert book.blocks[0].text == "Chapter 1: Hash Tables"
+    first = next(b for b in extract(book_pdf).blocks if b.kind != "header")
+    assert first.kind == "heading"
+    assert first.text == "Chapter 1: Hash Tables"
 
 
 def test_body_text_is_one_paragraph(book_pdf):
@@ -23,10 +23,10 @@ def test_monospace_text_is_code(book_pdf):
     assert ("code", "table = {}  # empty dict") in kinds(book)
 
 
-def test_running_headers_and_page_numbers_are_dropped(book_pdf):
-    texts = [b.text for b in extract(book_pdf).blocks]
-    assert "A Small Book" not in texts
-    assert not any(t.strip().isdigit() for t in texts)
+def test_running_headers_are_marked_and_page_numbers_dropped(book_pdf):
+    blocks = extract(book_pdf).blocks
+    assert all(b.kind == "header" for b in blocks if b.text == "A Small Book")
+    assert not any(b.text.strip().isdigit() for b in blocks)
 
 
 def test_blocks_keep_reading_order_and_page(book_pdf):
@@ -44,7 +44,7 @@ def test_running_header_with_section_name_and_page_number_is_dropped(tmp_path):
     sections = ["Background", "Input/output", "Variables"]
     pages = [[(f"1.{n + 1} • {s}     {n + 9}", "helv", 9, 30), ("Body text of the page.", "helv", 11, 90)]
              for n, s in enumerate(sections)]
-    texts = [b.text for b in extract(write_pages(tmp_path / "r.pdf", pages)).blocks]
+    texts = [b.text for b in extract(write_pages(tmp_path / "r.pdf", pages)).blocks if b.kind != "header"]
     assert texts == ["Body text of the page."] * 3
 
 
@@ -196,6 +196,69 @@ def test_font_name_marks_bold():
     assert looks_bold("Avenir-Heavy", flags=0)
     assert not looks_bold("NotoSans-Regular", flags=0)
     assert looks_bold("X+AdvOT123", flags=16)
+
+
+def test_fonts_that_are_mostly_symbols_are_math_fonts():
+    from ratica.extract import symbolic_fonts
+    spans = [("AdvP4C4E74", "¼"), ("AdvP4C4E74", "ð"), ("AdvP4C4E74", "Þ"), ("AdvP4C4E74", "¼ "),
+             ("Times-Roman", "Execution time of the program"), ("Times-Roman", "costs ¼ of the budget"),
+             ("MathematicalPi-One", "\x02")]
+    assert symbolic_fonts(spans) == {"AdvP4C4E74", "MathematicalPi-One"}
+
+
+def test_misencoded_math_signs_make_a_formula():
+    from ratica.extract import MISENCODED_MATH
+    assert MISENCODED_MATH.search("n ¼ Execution time")
+    assert not MISENCODED_MATH.search("Execution time of the program")
+
+
+def test_vertical_text_is_left_alone(tmp_path):
+    doc = pymupdf.open()
+    page = doc.new_page()
+    page.insert_text((300, 400), "A rotated figure label", fontname="helv", fontsize=9, rotate=90)
+    page.insert_textbox(pymupdf.Rect(72, 72, 250, 120), "Normal text.", fontname="helv", fontsize=11)
+    doc.save(tmp_path / "v.pdf")
+    kinds = {b.text: b.kind for b in extract(tmp_path / "v.pdf").blocks}
+    assert kinds["A rotated figure label"] == "figure"
+    assert kinds["Normal text."] == "paragraph"
+
+
+def test_running_headers_become_translatable_header_blocks(tmp_path):
+    sections = ["Background", "Input/output", "Variables"]
+    pages = [[(f"1.{n + 1} • {s}     {n + 9}", "notos", 9, 30), ("Body text of the page.", "helv", 11, 90),
+              (str(n + 9), "helv", 9, 800)] for n, s in enumerate(sections)]
+    blocks = extract(write_pages(tmp_path / "h.pdf", pages)).blocks
+    headers = [b for b in blocks if b.kind == "header"]
+    assert [b.text for b in headers] == [f"1.{n + 1} • {s} {n + 9}" for n, s in enumerate(sections)]
+    assert all(b.translatable for b in headers)
+    assert not any(b.text.strip().isdigit() for b in blocks)
+
+
+def test_a_margin_label_on_the_first_line_is_its_own_block(tmp_path):
+    doc = pymupdf.open()
+    page = doc.new_page()
+    tw = pymupdf.TextWriter(page.rect)
+    tw.append((72, 100), "Example", font=pymupdf.Font("hebo"), fontsize=10)
+    tw.append((140, 100), "Assume a disk subsystem with the following", font=pymupdf.Font("tiro"), fontsize=10)
+    tw.append((140, 112), "components and MTTF values.", font=pymupdf.Font("tiro"), fontsize=10)
+    tw.write_text(page)
+    doc.save(tmp_path / "label.pdf")
+    texts = [b.text for b in extract(tmp_path / "label.pdf").blocks]
+    assert "Example" in texts
+    assert "Assume a disk subsystem with the following components and MTTF values." in texts
+
+
+def test_a_single_line_with_wide_gaps_splits_into_pieces(tmp_path):
+    doc = pymupdf.open()
+    page = doc.new_page()
+    tw = pymupdf.TextWriter(page.rect)
+    for x, label in ((80, "Dell 630 cluster watts/node"), (260, "Dell 630 44 cores watts"),
+                     (420, "Dell 730 44 cores watts")):
+        tw.append((x, 100), label, font=pymupdf.Font("helv"), fontsize=8)
+    tw.write_text(page)
+    doc.save(tmp_path / "legend.pdf")
+    texts = [b.text for b in extract(tmp_path / "legend.pdf").blocks]
+    assert texts == ["Dell 630 cluster watts/node", "Dell 630 44 cores watts", "Dell 730 44 cores watts"]
 
 
 def test_block_ids_are_stable_across_runs(book_pdf):

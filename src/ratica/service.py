@@ -5,7 +5,7 @@ result; ``translate_pdf`` runs one book from start, or from where it paused, to 
 """
 import json
 import time
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 
 from . import hardware, install, paths
@@ -27,6 +27,7 @@ class Settings:
     words_per_second: float
     llama_build: str
     seconds_per_block: float = 0  # fixed cost of each request, measured on short texts
+    real_words_per_second: float = 0  # learned from whole books; beats the short speed test once known
 
     def is_current(self) -> bool:
         return (self.llama_build == install.LLAMA_BUILD and Path(self.server).exists()
@@ -61,8 +62,20 @@ REAL_TEXT_FACTOR = 1.25  # real books translate ~20-25% slower than the calibrat
 
 def book_estimate(book: Book, settings: Settings, done_ids=frozenset()) -> float:
     """Seconds this computer needs for the rest of ``book``, as shown to the user before starting."""
+    if settings.real_words_per_second:  # measured on real books: already includes every overhead
+        return estimate_seconds(book, settings.real_words_per_second, done_ids) + ENGINE_START_SECONDS
     work = estimate_seconds(book, settings.words_per_second, done_ids, settings.seconds_per_block)
     return work * REAL_TEXT_FACTOR + ENGINE_START_SECONDS
+
+
+LEARN_MIN_WORDS = 2000  # shorter runs say little about sustained speed
+
+
+def learn_speed(settings: Settings, words: int, seconds: float) -> Settings:
+    """Fold the speed of a finished translation into the settings (averaged with earlier books)."""
+    observed = words / max(seconds, 1)
+    old = settings.real_words_per_second
+    return replace(settings, real_words_per_second=round((old + observed) / 2 if old else observed, 2))
 
 
 def prepare(on_progress=None, should_stop=None, log=print) -> Settings:
@@ -119,6 +132,9 @@ def translate_pdf(pdf, lang: str, settings: Settings | None = None, out_dir=None
     work = work_dir(pdf, out_dir, lang)
     book = extract(pdf)
     store = JobStore(work / "job.sqlite")
+    done_before = set(store.translations())
+    new_words = sum(len(b.text.split()) for b in book.blocks
+                    if b.translatable and b.id not in done_before and not store.done_for_hash(b.hash))
     t0 = time.monotonic()
 
     def run(url, slots):
@@ -132,6 +148,9 @@ def translate_pdf(pdf, lang: str, settings: Settings | None = None, out_dir=None
             finished = run(engine.url, settings.slots)
 
     result = {"finished": finished, "pdf": None, "epub": None, "seconds": time.monotonic() - t0}
+    # Learn this computer's real speed from whole books run on the installed engine.
+    if finished and settings and settings.llama_build and new_words >= LEARN_MIN_WORDS:
+        save_settings(learn_speed(settings, new_words, result["seconds"]))
     if finished:
         translations = store.translations()
         first_heading = next((b.id for b in book.blocks if b.kind == "heading"), None)

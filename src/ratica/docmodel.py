@@ -2,7 +2,8 @@
 import hashlib
 from dataclasses import dataclass, field
 
-TRANSLATABLE = {"heading", "paragraph", "item"}
+TRANSLATABLE = {"heading", "paragraph", "item", "header"}
+ONLY_IN_PAGE_LAYOUT = {"header", "figure"}  # running headers and figure text make no sense in a reflowed book
 
 
 def text_hash(text: str) -> str:
@@ -26,7 +27,7 @@ class Part:
 @dataclass
 class Block:
     id: str
-    kind: str  # "heading" | "paragraph" | "item" | "code" | "formula" | "image"
+    kind: str  # "heading" | "paragraph" | "item" | "header" | "code" | "formula" | "figure" | "image"
     text: str
     page: int  # 1-based page number in the source PDF
     level: int = 0  # heading level, 1 = largest

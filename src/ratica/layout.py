@@ -1,20 +1,33 @@
 """Write the translation into the original PDF, keeping its layout.
 
-For every translated block, the original text is removed from its box (images, lines and
-other text stay) and the translation is set in the same box with a similar font, size and
-colour, shrinking the font when the translation is longer. Blocks that were not translated,
-such as code and formulas, are left exactly as they were.
+Each page is planned before anything changes:
+
+1. For every translated block, find the room it may use: its own box, grown right to its
+   column edge and down into free space, never touching other text, images, lines or
+   filled shapes, and never leaving a coloured box it sits in.
+2. Measure how much the translation must shrink to fit (as little as possible).
+3. Give paragraphs of the same style on a page one common size, so the page looks even.
+4. A translation that would need to shrink below MIN_SCALE is not written: that block keeps
+   its original text instead of overlapping anything.
+
+Only then is the original text of the planned blocks removed (images and drawings stay) and
+the translations are written with a matching font, size, line spacing and colour. Blocks
+that are not translated, such as code and formulas, are never touched.
 """
 import html
 from collections import defaultdict
+from dataclasses import dataclass
 from pathlib import Path
 
 import pymupdf
 
 from .docmodel import Block, Book, Part
 
-MIN_SCALE = 0.55  # shrink the font down to 55% before letting text run over the box
+MIN_SCALE = 0.6  # below this the text would be too small to read: keep the original instead
+EVEN_SCALE_FLOOR = 0.82  # paragraphs on a page are made equally small down to this size, not further
 INSET = 0.8  # points; keeps the removal from touching neighbouring text
+GAP = 2.0  # points kept free around other content
+BODY_KINDS = {"paragraph", "item"}
 
 
 def split_for_parts(text: str, parts: list[Part]) -> list[str]:
@@ -33,45 +46,86 @@ def split_for_parts(text: str, parts: list[Part]) -> list[str]:
     return pieces
 
 
-def _css(part: Part, block: Block) -> str:
+def _leading(part: Part) -> float:
+    """The original line spacing, from the box height and line count."""
+    if part.lines > 1:
+        leading = (part.rect[3] - part.rect[1]) / part.lines
+    else:
+        leading = part.size * 1.2
+    return min(max(leading, part.size * 1.05), part.size * 1.6)
+
+
+def _css(part: Part, block: Block, scale: float = 1.0) -> str:
     rgb = f"#{part.color:06x}"
-    family = "serif" if part.serif else "sans-serif"
+    family = "Times" if part.serif else "sans-serif"  # Times sets ~9% narrower than the default serif
     align = "justify" if block.kind == "paragraph" and part.lines >= 3 else "left"
-    return (f"* {{ font-family: {family}; font-size: {part.size:.1f}px; line-height: 1.18; color: {rgb}; "
+    return (f"* {{ font-family: {family}; font-size: {part.size * scale:.2f}px; "
+            f"line-height: {_leading(part) * scale:.2f}px; color: {rgb}; "
             f"font-weight: {'bold' if part.bold else 'normal'}; font-style: {'italic' if part.italic else 'normal'}; "
             f"text-align: {align}; margin: 0; padding: 0; }}")
 
 
-GAP = 2.0  # points kept free around other content
+_scratch = pymupdf.open()
 
 
-def _obstacles(page) -> list[pymupdf.Rect]:
-    """Every text line and image on the page, read before anything is removed."""
-    found = []
+def _needed_scale(body: str, css: str, rect: pymupdf.Rect) -> float:
+    """How much the text must shrink to fit ``rect`` (1.0 = not at all).
+
+    Measured by writing on a throwaway page with the very call used for the real page;
+    Story.fit_scale over-estimates the height of short texts.
+    """
+    if rect.is_empty:
+        return 0.0
+    page = _scratch.new_page(width=rect.x1 + 10, height=rect.y1 + 10)
+    try:
+        spare, scale = page.insert_htmlbox(rect, body, css=css, scale_low=0)
+    finally:
+        _scratch.delete_page(-1)
+    return scale if spare >= 0 else 0.0
+
+
+# --- where text may go ------------------------------------------------------------------------------------------
+
+@dataclass
+class Obstacles:
+    lines: list[pymupdf.Rect]  # text lines and images
+    shapes: list[pymupdf.Rect]  # vector drawings: rules, table borders, chart marks, filled boxes
+
+
+def obstacles_on(page) -> Obstacles:
+    """Everything on the page, read before anything is removed."""
+    lines = []
     for b in page.get_text("dict")["blocks"]:
         if b["type"] == 1:
-            found.append(pymupdf.Rect(b["bbox"]))
+            lines.append(pymupdf.Rect(b["bbox"]))
         else:
-            found += [pymupdf.Rect(line["bbox"]) for line in b["lines"]
+            lines += [pymupdf.Rect(line["bbox"]) for line in b["lines"]
                       if any(s["text"].strip() for s in line["spans"])]
-    return found
+    shapes = [pymupdf.Rect(d["rect"]) for d in page.get_drawings()]
+    return Obstacles(lines, shapes)
 
 
-def room_for(rect: pymupdf.Rect, obstacles: list[pymupdf.Rect], page_rect: pymupdf.Rect) -> pymupdf.Rect:
+def room_for(rect: pymupdf.Rect, obs: Obstacles, page_rect: pymupdf.Rect) -> pymupdf.Rect:
     """The largest box that starts at ``rect`` and grows right to its column edge, then down into empty
-    space, without touching any other block."""
-    others = [o for o in obstacles if (o & rect).get_area() < 0.5 * max(o.get_area(), 1)]
-    margin = min(rect.x0, 36)
-    # Right: the column edge is the widest block that starts where this one starts.
-    column = [o.x1 for o in obstacles if abs(o.x0 - rect.x0) < 30]
-    right = max([rect.x1, *column])
-    right = min(right, page_rect.x1 - margin)
+    space, without touching any other content or leaving a box it sits in."""
+    page_area = page_rect.get_area()
+    # Shapes that contain the text are its background (a coloured box): stay inside the smallest one.
+    containers = [s for s in obs.shapes if s.contains(rect) and s.get_area() < 0.9 * page_area]
+    limit = pymupdf.Rect(page_rect.x0 + min(rect.x0, 36), page_rect.y0, page_rect.x1 - min(rect.x0, 36),
+                         page_rect.y1 - 36)
+    if containers:
+        limit &= min(containers, key=lambda s: s.get_area()) + (0, 0, -GAP, -GAP)
+    others = [o for o in obs.lines if (o & rect).get_area() < 0.5 * max(o.get_area(), 1)]
+    others += [s for s in obs.shapes if not s.contains(rect) and not (s & rect).get_area() >= 0.5 * rect.get_area()]
+    # Right: the column edge is the widest line that starts where this block starts.
+    right = max([rect.x1, *(o.x1 for o in obs.lines if abs(o.x0 - rect.x0) < 30)])
+    right = min(right, limit.x1)
     for o in others:  # never run into something beside us
-        if o.y1 > rect.y0 and o.y0 < rect.y1 and o.x0 >= rect.x1 - 1:
+        if o.y1 > rect.y0 + 1 and o.y0 < rect.y1 - 1 and o.x0 >= rect.x1 - 1:
             right = min(right, o.x0 - GAP)
     right = max(right, rect.x1)
-    # Down: until the next block that shares any horizontal space, or the bottom margin.
-    bottom = page_rect.y1 - 36
+    # Down: until the next thing that shares any horizontal space, or the bottom margin.
+    bottom = limit.y1
     for o in others:
         if o.y0 >= rect.y1 - 1 and o.x1 > rect.x0 and o.x0 < right:
             bottom = min(bottom, o.y0 - GAP)
@@ -79,22 +133,47 @@ def room_for(rect: pymupdf.Rect, obstacles: list[pymupdf.Rect], page_rect: pymup
     return pymupdf.Rect(rect.x0, rect.y0, right, bottom)
 
 
-def _write_box(page, part: Part, text: str, block: Block, room: pymupdf.Rect):
-    rect = pymupdf.Rect(part.rect) + (0, 0, 1, 2)  # a little air below: line heights differ between fonts
-    body = html.escape(text)
-    spare, _ = page.insert_htmlbox(rect, body, css=_css(part, block), scale_low=1)
-    if spare >= 0:
-        return
-    # Too long for the original box: use free space around it before making the font smaller.
-    rect = room | rect
-    spare, _ = page.insert_htmlbox(rect, body, css=_css(part, block), scale_low=MIN_SCALE)
-    if spare < 0:  # still too long: allow any shrink rather than dropping text
-        page.insert_htmlbox(rect, body, css=_css(part, block), scale_low=0)
+# --- planning and writing ---------------------------------------------------------------------------------------
+
+@dataclass
+class Placement:
+    part: Part
+    block: Block
+    body: str
+    rect: pymupdf.Rect
+    scale: float
+
+
+def _plan_page(page, items: list[tuple[Part, str, Block]]) -> list[Placement]:
+    obs = obstacles_on(page)
+    plans = []
+    for part, text, block in items:
+        body = html.escape(text)
+        own = pymupdf.Rect(part.rect) + (0, 0, 1, 2)  # a little air below: line heights differ between fonts
+        css = _css(part, block)
+        need = _needed_scale(body, css, own)
+        rect = own
+        if need < 0.999:  # too long for its own box: use free space around it first
+            room = room_for(pymupdf.Rect(part.rect), obs, page.rect) | own
+            need, rect = _needed_scale(body, css, room), room
+        plans.append(Placement(part, block, body, rect, need))
+
+    # One size for all body text of the same style on the page (down to EVEN_SCALE_FLOOR).
+    groups = defaultdict(list)
+    for p in plans:
+        if p.block.kind in BODY_KINDS and p.scale >= MIN_SCALE:
+            groups[(round(p.part.size, 1), p.part.serif, p.part.bold)].append(p)
+    for members in groups.values():
+        even = max(EVEN_SCALE_FLOOR, min(p.scale for p in members))
+        for p in members:
+            p.scale = min(p.scale, even)
+    return [p for p in plans if p.scale >= MIN_SCALE]
 
 
 def write_layout_pdf(book: Book, translations: dict[str, str], path) -> Path:
     path = Path(path)
     doc = pymupdf.open(book.source)
+
     def translated(b):
         out = translations.get(b.id)
         return b.translatable and b.parts and out and out != b.text
@@ -116,22 +195,19 @@ def write_layout_pdf(book: Book, translations: dict[str, str], path) -> Path:
     for b in book.blocks:
         if not translated(b) or overlaps_untouched(b):
             continue
-        out = translations[b.id]
-        for i, (part, piece) in enumerate(zip(b.parts, split_for_parts(out, b.parts))):
+        for i, (part, piece) in enumerate(zip(b.parts, split_for_parts(translations[b.id], b.parts))):
             if b.kind == "item" and i == 0:
                 piece = f"{b.marker} {piece}"
             per_page[part.page].append((part, piece, b))
 
     for pno, items in per_page.items():
         page = doc[pno - 1]
-        obstacles = _obstacles(page)
-        rooms = [room_for(pymupdf.Rect(part.rect), obstacles, page.rect) for part, _, _ in items]
-        for part, _, _ in items:
-            r = pymupdf.Rect(part.rect) + (0, INSET, 0, -INSET)
-            page.add_redact_annot(r, fill=False)
+        plans = _plan_page(page, items)
+        for p in plans:
+            page.add_redact_annot(pymupdf.Rect(p.part.rect) + (0, INSET, 0, -INSET), fill=False)
         page.apply_redactions(images=pymupdf.PDF_REDACT_IMAGE_NONE, graphics=pymupdf.PDF_REDACT_LINE_ART_NONE)
-        for (part, text, block), room in zip(items, rooms):
-            _write_box(page, part, text, block, room)
+        for p in plans:
+            page.insert_htmlbox(p.rect, p.body, css=_css(p.part, p.block, p.scale), scale_low=0)
 
     doc.set_metadata({**doc.metadata, "producer": "Ratica"})
     doc.save(path, garbage=3, deflate=True)

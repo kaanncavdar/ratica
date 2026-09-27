@@ -1,6 +1,7 @@
 """Desktop window: pick a PDF, pick a language, translate. Everything else happens by itself."""
 import sys
 import threading
+import time
 import traceback
 from pathlib import Path
 
@@ -268,6 +269,7 @@ class MainWindow(QMainWindow):
             return
         self.busy = True
         QSettings("Ratica", "Ratica").setValue("target", self.target())
+        self._run_first = None
         self.progress.setVisible(True)
         self.pause_button.setVisible(True)
         self.pause_button.setEnabled(True)
@@ -292,7 +294,16 @@ class MainWindow(QMainWindow):
     def _on_progress(self, done, total):
         self.progress.setMaximum(max(total, 1))
         self.progress.setValue(done)
-        self.status.setText(f"Translated {done:,} of {total:,} parts")
+        # Live estimate from the speed of this run, once enough parts are done to be meaningful.
+        now = time.monotonic()
+        if self._run_first is None:
+            self._run_first, self._run_start = done, now
+        left = ""
+        finished_now = done - self._run_first
+        if finished_now >= 20 and done < total:
+            rate = finished_now / (now - self._run_start)
+            left = f" · {_fmt_minutes((total - done) / rate)} left"
+        self.status.setText(f"Translated {done:,} of {total:,} parts{left}")
 
     def _on_stage(self, stage, done, total):
         if total > 1:

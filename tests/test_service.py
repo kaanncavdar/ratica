@@ -1,3 +1,5 @@
+import pytest
+
 from ratica.docmodel import Block, Book
 from ratica.service import Settings, estimate_seconds, load_settings, save_settings
 
@@ -46,6 +48,24 @@ def test_book_estimate_adds_real_text_margin_and_engine_start():
                  seconds_per_block=0.5)
     book = Book("x.pdf", "x", [Block("b0", "paragraph", " ".join(["w"] * 100), 1)])
     assert book_estimate(book, s) == (10 + 0.5) * REAL_TEXT_FACTOR + ENGINE_START_SECONDS
+
+
+def test_real_translation_speed_is_learned():
+    from ratica.service import learn_speed
+    s = Settings(backend="cuda", server="s", model="m", slots=8, words_per_second=80.0, llama_build="b11211",
+                 seconds_per_block=0.1)
+    s2 = learn_speed(s, words=72000, seconds=2520)  # a real book: ~28.6 words/s
+    assert s2.real_words_per_second == pytest.approx(28.57, abs=0.1)
+    s3 = learn_speed(s2, words=70000, seconds=1750)  # next book: 40 words/s, averaged with the first
+    assert 28.6 < s3.real_words_per_second < 40
+
+
+def test_book_estimate_uses_the_learned_speed():
+    from ratica.service import ENGINE_START_SECONDS, book_estimate
+    s = Settings(backend="cuda", server="s", model="m", slots=8, words_per_second=80.0, llama_build="b11211",
+                 seconds_per_block=0.1, real_words_per_second=20.0)
+    book = Book("x.pdf", "x", [Block("b0", "paragraph", " ".join(["w"] * 200), 1)])
+    assert book_estimate(book, s) == pytest.approx(10 + ENGINE_START_SECONDS)
 
 
 def test_estimate_skips_blocks_already_done():

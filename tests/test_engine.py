@@ -27,6 +27,16 @@ def test_translator_returns_the_clean_translation(fake_llama):
     assert make_translator(url, "en", "tr")("Hello world.") == "Merhaba dünya."
 
 
+def test_output_length_is_capped_relative_to_the_input(fake_llama):
+    url, seen = fake_llama
+    translate = make_translator(url, "en", "tr")
+    translate("Short.")
+    translate("word " * 400)
+    short, long = seen[0][1]["max_tokens"], seen[1][1]["max_tokens"]
+    assert short <= 200  # a runaway loop on a short sentence stops early
+    assert long >= 1000  # long paragraphs still have room
+
+
 def test_translator_prompt_names_the_languages_and_keep_rule(fake_llama):
     url, seen = fake_llama
     make_translator(url, "en", "tr")("Hello world.")

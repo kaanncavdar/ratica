@@ -130,6 +130,95 @@ def test_block_boxes_ignore_trailing_blank_space(tmp_path):
     assert rect.x1 < 72 + pymupdf.get_text_length("Label: n =  ", fontname="helv", fontsize=11)
 
 
+def test_lines_and_boxes_are_obstacles_too(tmp_path):
+    doc = pymupdf.open()
+    page = doc.new_page()
+    page.insert_text((72, 100), "Short.", fontname="helv", fontsize=11)
+    page.draw_line((60, 130), (540, 130), width=1.5)  # a rule under the paragraph
+    page.insert_textbox(pymupdf.Rect(72, 60, 520, 80), LONG_EN, fontname="helv", fontsize=11)
+    doc.save(tmp_path / "rule.pdf")
+    book = extract(tmp_path / "rule.pdf")
+    short = next(b for b in book.blocks if b.text == "Short.")
+    tr = {short.id: "Kısa değil, epeyce uzun bir çeviri metni ki birkaç satır tutabilir ve aşağı taşmak ister, "
+                    "hatta çizginin altına kadar inmek ister ama inmemeli."}
+    out = pymupdf.open(write_layout_pdf(book, tr, tmp_path / "out.pdf"))[0]
+    words = out.get_text("words")
+    assert all(w[3] <= 130 for w in words if w[4] in ("inmemeli.", "ister,", "Kısa"))
+
+
+def test_text_stays_inside_its_coloured_box(tmp_path):
+    doc = pymupdf.open()
+    page = doc.new_page()
+    page.draw_rect(pymupdf.Rect(60, 80, 320, 140), color=None, fill=(0.85, 0.9, 0.95))
+    page.insert_text((72, 100), "Checkpoint", fontname="helv", fontsize=11)
+    page.insert_textbox(pymupdf.Rect(60, 200, 540, 260), LONG_EN, fontname="helv", fontsize=11)
+    doc.save(tmp_path / "box.pdf")
+    book = extract(tmp_path / "box.pdf")
+    label = next(b for b in book.blocks if b.text == "Checkpoint")
+    tr = {label.id: "Kontrol noktası ve kutunun içinde kalması gereken epey uzun bir etiket metni"}
+    out = pymupdf.open(write_layout_pdf(book, tr, tmp_path / "out.pdf"))[0]
+    for w in out.get_text("words"):
+        if w[4] in ("Kontrol", "metni", "etiket"):
+            assert 60 <= w[0] and w[2] <= 321 and w[3] <= 141
+
+
+def test_paragraphs_of_the_same_style_get_the_same_size(tmp_path):
+    doc = pymupdf.open()
+    page = doc.new_page()
+    page.insert_textbox(pymupdf.Rect(72, 72, 520, 130), LONG_EN, fontname="tiro", fontsize=11)
+    page.insert_textbox(pymupdf.Rect(72, 140, 520, 198), LONG_EN.replace("Hash", "Search"), fontname="tiro",
+                        fontsize=11)
+    page.insert_textbox(pymupdf.Rect(72, 205, 520, 260), "A third paragraph keeps the space below busy.",
+                        fontname="tiro", fontsize=11)
+    doc.save(tmp_path / "same.pdf")
+    book = extract(tmp_path / "same.pdf")
+    first, second = book.blocks[0], book.blocks[1]
+    tr = {first.id: LONG_TR, second.id: "Arama tabloları kısa bir çeviri."}
+    out = pymupdf.open(write_layout_pdf(book, tr, tmp_path / "out.pdf"))[0]
+    a, b = _sizes(out, "anahtar"), _sizes(out, "Arama")
+    assert a and b and abs(min(a) - min(b)) < 0.2
+
+
+def test_a_translation_that_cannot_fit_leaves_the_original(tmp_path):
+    doc = pymupdf.open()
+    page = doc.new_page()
+    page.draw_rect(pymupdf.Rect(68, 86, 112, 104), color=(0, 0, 0), width=0.8)  # a small table cell
+    page.draw_rect(pymupdf.Rect(112, 86, 300, 104), color=(0, 0, 0), width=0.8)  # its neighbour
+    page.draw_rect(pymupdf.Rect(68, 104, 300, 122), color=(0, 0, 0), width=0.8)  # the row below
+    page.insert_text((72, 100), "Label", fontname="helv", fontsize=11)
+    page.insert_text((116, 100), "Value", fontname="helv", fontsize=11)
+    doc.save(tmp_path / "tight.pdf")
+    book = extract(tmp_path / "tight.pdf")
+    label = next(b for b in book.blocks if b.text.startswith("Label"))
+    tr = {label.id: "Bu etiket çok çok çok uzun bir çeviriye dönüştü ve asla oraya sığmaz " * 3}
+    out = pymupdf.open(write_layout_pdf(book, tr, tmp_path / "out.pdf"))[0]
+    assert "Label" in out.get_text() and "etiket" not in out.get_text()
+
+
+def test_indented_items_may_grow_to_the_column_edge_of_the_text_above(tmp_path):
+    doc = pymupdf.open()
+    page = doc.new_page()
+    page.insert_textbox(pymupdf.Rect(72, 72, 520, 120), LONG_EN, fontname="tiro", fontsize=11)
+    for i, y in enumerate((140, 154, 168)):
+        page.insert_text((130, y), f"{i + 1} disk, rated at 1,000,000 hours", fontname="tiro", fontsize=11)
+    doc.save(tmp_path / "items.pdf")
+    book = extract(tmp_path / "items.pdf")
+    first = next(b for b in book.blocks if b.text.startswith("1 disk"))
+    tr = {first.id: "1 disk, her biri 1.000.000 saat arızalar arası ortalama süre ile derecelendirilmiş"}
+    out = pymupdf.open(write_layout_pdf(book, tr, tmp_path / "out.pdf"))[0]
+    sizes = _sizes(out, "derecelendirilmiş")
+    assert sizes and min(sizes) >= 10.8
+
+
+def test_serif_text_uses_a_times_like_font(tmp_path):
+    src = make_source(tmp_path / "src.pdf")
+    book = extract(src)
+    out = pymupdf.open(write_layout_pdf(book, translate_all(book, {LONG_EN: LONG_TR}), tmp_path / "out.pdf"))[0]
+    fonts = {s["font"] for b in out.get_text("dict")["blocks"] if b["type"] == 0
+             for l in b["lines"] for s in l["spans"] if "anahtar" in s["text"]}
+    assert fonts and all("Roman" in f or "Times" in f for f in fonts)
+
+
 def test_a_paragraph_split_across_pages_is_written_back_on_both(tmp_path):
     doc = pymupdf.open()
     for text in ("The first part of a sentence that continues", "on the next page and ends here."):

@@ -111,9 +111,11 @@ def make_translator(url: str, source: str, target: str, max_tokens: int = 4096):
     session = requests.Session()
 
     def translate(text: str) -> str:
+        # A translation is rarely more than ~1.5x its source; the cap stops a model stuck in a loop early.
+        limit = min(max_tokens, len(text) // 2 + 128)
         r = session.post(f"{url}/v1/chat/completions", json={
             "messages": [{"role": "system", "content": prompt}, {"role": "user", "content": text}],
-            "temperature": 0, "max_tokens": max_tokens,
+            "temperature": 0, "max_tokens": limit,
             "chat_template_kwargs": {"enable_thinking": False},
         }, timeout=600)
         r.raise_for_status()
