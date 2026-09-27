@@ -2,9 +2,41 @@
 
 **Translate long technical PDF books on your own computer.** Ratica reads a PDF, translates it paragraph by paragraph with a local AI model, and gives you the translation as both PDF and EPUB. No cloud, no account, no API key. Your book never leaves your machine.
 
-> **Status: early development.** There is no release yet. Watch the repository to follow along.
+> **Status: beta.** Ratica works end to end, but it is young: expect rough edges and please [report them](https://github.com/kaanncavdar/ratica/issues).
 
 ![How Ratica translates a book](docs/images/pipeline.svg)
+
+## Install
+
+Download the file for your system from **[Releases](https://github.com/kaanncavdar/ratica/releases)**:
+
+| System | File | Notes |
+|---|---|---|
+| Windows 10/11 | `Ratica-…-Windows-Setup.exe` | Windows may show "Windows protected your PC" because the installer is not code-signed. Click **More info → Run anyway**. |
+| macOS (Apple Silicon) | `Ratica-…-macOS-AppleSilicon.dmg` | Drag Ratica to Applications. The first time, right-click Ratica → **Open**, because the app is not notarized by Apple. |
+| Linux (x64) | `Ratica-…-Linux-x64.tar.gz` | Unpack and run `Ratica/Ratica`. |
+
+On first start Ratica downloads its translation engine and AI model (about 5–6 GB, once) and measures your computer's speed. After that it works offline.
+
+### Run from source
+
+Download or clone this repository, then double-click **`start.bat`** (Windows) or **`start.command`** (macOS), or run `./start.sh` (Linux). The script installs [uv](https://docs.astral.sh/uv/) if needed, then Ratica's packages, then opens the app.
+
+## Use
+
+1. Choose a PDF or drop it on the window.
+2. Pick the language to translate to.
+3. Press **Translate**. You can pause and resume at any time; progress is saved.
+4. The translated `book.<language>.pdf` and `book.<language>.epub` are saved next to the original.
+
+There is also a command line:
+
+```
+ratica translate book.pdf --to de        # translate (sets itself up on first use)
+ratica translate book.pdf --to ja --keep "Kubernetes,Linus Torvalds"
+ratica setup                             # download and measure speed now
+ratica info                              # hardware and settings, for bug reports
+```
 
 ## Features
 
@@ -31,7 +63,7 @@ On an entry-level gaming GPU with 6 GB of memory, a 200-page book takes about **
 | AMD or Intel GPU | 🧪 Should work (Vulkan), not yet tested — reports welcome |
 | No GPU | ⚠️ Works, but slow |
 
-Windows, macOS and Linux. About 6 GB of free disk space for the engine and the model.
+Windows 10/11, macOS 12 or newer, and Linux. About 6 GB of free disk space for the engine and the model.
 
 ![How Ratica picks an engine](docs/images/backends.svg)
 
@@ -43,15 +75,22 @@ Ratica uses **[Gemma-4-E4B-it](https://huggingface.co/google/gemma-4-E4B-it)** (
 
 Everything runs locally. Ratica only goes online to download the engine and the model on first launch and to check for updates on GitHub. It never uploads your files or text.
 
+## Known limitations
+
+- Scanned PDFs (pages that are images) are not translated yet; OCR is planned.
+- Text inside images and diagrams stays in the original language.
+- The output is reflowed, so page numbers differ from the original. Formulas typeset as text may lose their layout.
+- The app window is in English for now.
+
 ## Roadmap
 
-| v1 | v2 |
+| v1 (now) | v2 |
 |---|---|
 | Text PDFs → PDF + EPUB | OCR for scanned pages |
 | Code, URL, formula and name protection | Translated diagram labels |
 | Resumable, parallel translation | Splitting large tables |
 | Automatic hardware setup | Glossary for consistent terms |
-| Simple desktop app | Side-by-side preview |
+| Simple desktop app | Side-by-side preview, translated app window |
 
 Right-to-left scripts and comics (text inside speech bubbles) are ideas for later, not promises.
 

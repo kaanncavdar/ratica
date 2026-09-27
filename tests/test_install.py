@@ -74,6 +74,11 @@ def test_windows_cuda_needs_the_engine_and_the_cuda_runtime():
     assert names == ["llama-b11211-bin-win-cuda-12.4-x64.zip", "cudart-llama-bin-win-cuda-12.4-x64.zip"]
 
 
+def test_cpu_fallback_uses_a_build_without_gpu_libraries():
+    assert [a.name for a in engine_assets("Windows", "cpu")] == ["llama-b11211-bin-win-cpu-x64.zip"]
+    assert [a.name for a in engine_assets("Linux", "cpu")] == ["llama-b11211-bin-ubuntu-x64.tar.gz"]
+
+
 def test_every_supported_platform_has_pinned_assets():
     for system, backend in [("Windows", "vulkan"), ("Windows", "cpu"), ("Linux", "vulkan"), ("Linux", "cuda"),
                             ("Linux", "cpu"), ("Darwin", "metal")]:

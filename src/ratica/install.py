@@ -42,20 +42,24 @@ _A = {
                           "7dc8fa4a580c66fd828dc97976f2ea4c473fcd183537d1ad408421e0ec487510", 594377924),
     "linux-vulkan": Asset("llama-b11211-bin-ubuntu-vulkan-x64.tar.gz",
                           "39d0c77061e045b7138f441f399b6ecb47b7b019c1cf94d5eed6e7ef0973032d", 31345681),
+    "win-cpu": Asset("llama-b11211-bin-win-cpu-x64.zip",
+                     "4523850c6d869ebe0642cf5ad9a26578a3ddc60f544f085562ee9bce3084ed99", 19155103),
+    "linux-cpu": Asset("llama-b11211-bin-ubuntu-x64.tar.gz",
+                       "6c1d18f86570db9cdb70fa2ef4cc5e8dbbdcb55294e43a8927beea08f4aba3af", 17402818),
     "mac-arm64": Asset("llama-b11211-bin-macos-arm64.tar.gz",
                        "2262cbe82440dfaa0b4ddeabded277a9fa0a91ef44ac56e3ab5ff6d820f5d4bc", 11755588),
     "mac-x64": Asset("llama-b11211-bin-macos-x64.tar.gz",
                      "e3525142255447f9bb0658b1a400ff2d58270817a6f9c07e877ce019389d80f3", 11309085),
 }
 
-# (system, backend) -> assets to unpack into one folder. Vulkan builds fall back to the CPU.
+# (system, backend) -> assets to unpack into one folder. The CPU builds need no GPU drivers at all.
 _ENGINES = {
     ("Windows", "cuda"): ["win-cuda", "win-cudart"],
     ("Windows", "vulkan"): ["win-vulkan"],
-    ("Windows", "cpu"): ["win-vulkan"],
+    ("Windows", "cpu"): ["win-cpu"],
     ("Linux", "cuda"): ["linux-cuda", "linux-cudart"],
     ("Linux", "vulkan"): ["linux-vulkan"],
-    ("Linux", "cpu"): ["linux-vulkan"],
+    ("Linux", "cpu"): ["linux-cpu"],
     ("Darwin", "metal"): ["mac-arm64"],
     ("Darwin", "cpu"): ["mac-x64"],
 }
