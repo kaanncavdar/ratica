@@ -1,6 +1,6 @@
 [project]
 name = "ratica"
-version = "0.1.1"
+version = "0.1.2"
 description = "Translate long technical PDF books entirely on your own computer, to PDF and EPUB."
 license = "AGPL-3.0-or-later"
 requires-python = ">=3.12"

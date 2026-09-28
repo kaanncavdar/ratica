@@ -50,8 +50,15 @@ jobs:
       - name: macOS disk image
         if: runner.os == 'macOS'
         run: |
-          hdiutil create -volname Ratica -srcfolder dist/Ratica.app -ov -format UDZO \
-            "dist/Ratica-${{ steps.version.outputs.version }}-macOS-AppleSilicon.dmg"
+          # The app next to a shortcut to Applications, so it can be dragged across.
+          mkdir -p dmg
+          cp -R dist/Ratica.app dmg/
+          ln -s /Applications dmg/Applications
+          dmg_file="dist/Ratica-${{ steps.version.outputs.version }}-macOS-AppleSilicon.dmg"
+          hdiutil create -volname Ratica -srcfolder dmg -ov -format UDZO "$dmg_file"
+          hdiutil attach "$dmg_file" -mountpoint /tmp/ratica-dmg
+          test -d /tmp/ratica-dmg/Ratica.app && test -L /tmp/ratica-dmg/Applications
+          hdiutil detach /tmp/ratica-dmg
       - name: Linux archive
         if: runner.os == 'Linux'
         run: tar -C dist -czf "dist/Ratica-${{ steps.version.outputs.version }}-Linux-x64.tar.gz" Ratica

@@ -1,11 +1,11 @@
 Ratica translates PDF books on your own computer and keeps the original page layout. Free, open source, offline. This is a **beta**: please [report anything that goes wrong](https://github.com/kaanncavdar/ratica/issues).
 
-## What's new in 0.1.1
+## What's new in 0.1.2
 
-- **Translate from any supported language, not only English.** Ratica recognises the language of the book
-  and preselects it; you can change it in the new *Translate from* box.
-- English is now a target language too, so you can translate books into English.
-- On the command line, `--source` is detected from the book unless you give it.
+- macOS: the disk image now shows an **Applications** shortcut to drag Ratica onto.
+- Clearer first-start steps for macOS 15 and Windows (see the table below).
+
+New in 0.1.1: translate from any supported language (recognised from the book), and into English too.
 
 ![Before and after](https://raw.githubusercontent.com/kaanncavdar/ratica/main/docs/images/before-after.png)
 
@@ -13,8 +13,8 @@ Ratica translates PDF books on your own computer and keeps the original page lay
 
 | Your computer | Download | How to install |
 |---|---|---|
-| **Windows 10/11** (64-bit) | `Ratica-…-Windows-Setup.exe` | Run it. Windows may say *"Windows protected your PC"* because the installer is not code-signed: click **More info → Run anyway**. |
-| **Mac with Apple Silicon** (M1, M2, M3, M4) | `Ratica-…-macOS-AppleSilicon.dmg` | Open it and drag **Ratica** to **Applications**. The first time, right-click Ratica → **Open** → **Open**, because the app is not notarized by Apple. |
+| **Windows 10/11** (64-bit) | `Ratica-…-Windows-Setup.exe` | Run it. The installer is not code-signed yet, so Windows may show *"Windows protected your PC"*: click **More info → Run anyway**. |
+| **Mac with Apple Silicon** (M1, M2, M3, M4) | `Ratica-…-macOS-AppleSilicon.dmg` | Open it and drag **Ratica** onto **Applications**. The app is not notarized by Apple yet, so macOS blocks the first start once: click **Done**, open **System Settings → Privacy & Security**, scroll down, click **Open Anyway** next to the Ratica message, enter your password and choose **Open**. After that it opens normally. |
 | **Linux** (x64) | `Ratica-…-Linux-x64.tar.gz` | `tar xzf Ratica-*-Linux-x64.tar.gz && ./Ratica/Ratica` |
 
 ## First start
