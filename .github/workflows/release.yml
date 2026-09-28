@@ -24,6 +24,13 @@ jobs:
           - os: ubuntu-22.04
             name: Linux
     runs-on: ${{ matrix.os }}
+    env:
+      MACOS_CERT_P12: ${{ secrets.MACOS_CERT_P12 }}  # "Developer ID Application" certificate, .p12 in base64
+      MACOS_CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+      MACOS_SIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}  # "Developer ID Application: Name (TEAMID)"
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}  # app-specific password from appleid.apple.com
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
@@ -47,6 +54,22 @@ jobs:
         run: |
           choco install innosetup --no-progress -y
           iscc /DAppVersion=${{ steps.version.outputs.version }} packaging\windows\ratica.iss
+      # Signing and notarization run only when the Apple Developer secrets are set in the repository;
+      # without them the app stays ad-hoc signed and macOS asks once to "Open Anyway".
+      - name: Sign the macOS app
+        if: runner.os == 'macOS' && env.MACOS_CERT_P12 != ''
+        run: |
+          keychain="$RUNNER_TEMP/signing.keychain-db"
+          security create-keychain -p "" "$keychain"
+          security set-keychain-settings -lut 3600 "$keychain"
+          security unlock-keychain -p "" "$keychain"
+          echo "$MACOS_CERT_P12" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security import "$RUNNER_TEMP/cert.p12" -k "$keychain" -P "$MACOS_CERT_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "" "$keychain"
+          security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
+          codesign --force --deep --options runtime --timestamp \
+            --entitlements packaging/macos/entitlements.plist -s "$MACOS_SIGN_IDENTITY" dist/Ratica.app
+          codesign --verify --deep --strict --verbose=2 dist/Ratica.app
       - name: macOS disk image
         if: runner.os == 'macOS'
         run: |
@@ -59,6 +82,15 @@ jobs:
           hdiutil attach "$dmg_file" -mountpoint /tmp/ratica-dmg
           test -d /tmp/ratica-dmg/Ratica.app && test -L /tmp/ratica-dmg/Applications
           hdiutil detach /tmp/ratica-dmg
+      - name: Notarize the macOS disk image
+        if: runner.os == 'macOS' && env.MACOS_CERT_P12 != ''
+        run: |
+          dmg_file="dist/Ratica-${{ steps.version.outputs.version }}-macOS-AppleSilicon.dmg"
+          codesign --force --timestamp -s "$MACOS_SIGN_IDENTITY" "$dmg_file"
+          xcrun notarytool submit "$dmg_file" --apple-id "$APPLE_ID" --password "$APPLE_APP_PASSWORD" \
+            --team-id "$APPLE_TEAM_ID" --wait
+          xcrun stapler staple "$dmg_file"
+          spctl --assess --type open --context context:primary-signature --verbose "$dmg_file"
       - name: Linux archive
         if: runner.os == 'Linux'
         run: tar -C dist -czf "dist/Ratica-${{ steps.version.outputs.version }}-Linux-x64.tar.gz" Ratica
