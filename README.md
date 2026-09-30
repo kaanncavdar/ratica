@@ -50,7 +50,7 @@ Download the file for your system from **[Releases](https://github.com/kaanncavd
 | System | File | Notes |
 |---|---|---|
 | Windows 10/11 | `Ratica-…-Windows-Setup.exe` | Run it. The installer is not code-signed yet, so Windows may show *"Windows protected your PC"*: click **More info → Run anyway**. |
-| macOS (Apple Silicon) | `Ratica-…-macOS-AppleSilicon.dmg` | Open the disk image and drag **Ratica** onto **Applications**. The app is not notarized by Apple yet, so macOS blocks the first start once: click **Done**, open **System Settings → Privacy & Security**, scroll down, click **Open Anyway** next to the Ratica message, enter your password and choose **Open**. After that it opens normally. |
+| macOS (Apple Silicon) | `Ratica-…-macOS-AppleSilicon.dmg` | Open the disk image, drag **Ratica** onto **Applications** and open it from there. The app is signed and notarized by Apple. |
 | Linux (x64) | `Ratica-…-Linux-x64.tar.gz` | Unpack and run `Ratica/Ratica`. |
 
 On first start Ratica downloads its translation engine and AI model (about 5–6 GB, once) and measures your computer's speed. After that it works offline.
