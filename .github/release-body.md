@@ -1,11 +1,14 @@
 Ratica translates PDF books on your own computer and keeps the original page layout. Free, open source, offline. This is a **beta**: please [report anything that goes wrong](https://github.com/kaanncavdar/ratica/issues).
 
-## What's new in 0.1.2
+## What's new in 0.1.3
 
-- macOS: the disk image now shows an **Applications** shortcut to drag Ratica onto.
-- Clearer first-start steps for macOS 15 and Windows (see the table below).
+- **macOS: signed and notarized by Apple.** Ratica opens with a double click, without the "Apple could not
+  verify" warning.
+- **Free up space:** the window shows how much the downloaded engine and model take and can delete them.
+  The Windows uninstaller asks whether to delete them too.
 
-New in 0.1.1: translate from any supported language (recognised from the book), and into English too.
+Earlier: translate from any supported language, recognised from the book (0.1.1); Applications shortcut in the
+macOS disk image (0.1.2).
 
 ![Before and after](https://raw.githubusercontent.com/kaanncavdar/ratica/main/docs/images/before-after.png)
 
@@ -14,7 +17,7 @@ New in 0.1.1: translate from any supported language (recognised from the book), 
 | Your computer | Download | How to install |
 |---|---|---|
 | **Windows 10/11** (64-bit) | `Ratica-…-Windows-Setup.exe` | Run it. The installer is not code-signed yet, so Windows may show *"Windows protected your PC"*: click **More info → Run anyway**. |
-| **Mac with Apple Silicon** (M1, M2, M3, M4) | `Ratica-…-macOS-AppleSilicon.dmg` | Open it and drag **Ratica** onto **Applications**. The app is not notarized by Apple yet, so macOS blocks the first start once: click **Done**, open **System Settings → Privacy & Security**, scroll down, click **Open Anyway** next to the Ratica message, enter your password and choose **Open**. After that it opens normally. |
+| **Mac with Apple Silicon** (M1, M2, M3, M4) | `Ratica-…-macOS-AppleSilicon.dmg` | Open it and drag **Ratica** onto **Applications**, then open it from there. The app is signed and notarized by Apple. |
 | **Linux** (x64) | `Ratica-…-Linux-x64.tar.gz` | `tar xzf Ratica-*-Linux-x64.tar.gz && ./Ratica/Ratica` |
 
 ## First start
