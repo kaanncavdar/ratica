@@ -9,8 +9,9 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read  # only the release job below may write
 
+# Actions are pinned to commit hashes, so a moved tag cannot run new code next to the secrets.
 jobs:
   build:
     strategy:
@@ -25,15 +26,12 @@ jobs:
             name: Linux
     runs-on: ${{ matrix.os }}
     env:
-      MACOS_CERT_P12: ${{ secrets.MACOS_CERT_P12 }}  # "Developer ID Application" certificate, .p12 in base64
-      MACOS_CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
-      MACOS_SIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}  # "Developer ID Application: Name (TEAMID)"
-      APPLE_ID: ${{ secrets.APPLE_ID }}
-      APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}  # app-specific password from appleid.apple.com
-      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      # Sign and notarize only tagged releases on macOS, and only when the Apple secrets exist.
+      # The secrets themselves are handed to the two signing steps alone.
+      MAC_SIGNING: ${{ matrix.name == 'macOS' && startsWith(github.ref, 'refs/tags/v') && secrets.MACOS_CERT_P12_BASE64 != '' }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e  # v6
       - name: Qt libraries (Linux)
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libxcb-cursor0 libfontconfig1
@@ -54,21 +52,30 @@ jobs:
         run: |
           choco install innosetup --no-progress -y
           iscc /DAppVersion=${{ steps.version.outputs.version }} packaging\windows\ratica.iss
-      # Signing and notarization run only when the Apple Developer secrets are set in the repository;
-      # without them the app stays ad-hoc signed and macOS asks once to "Open Anyway".
+
+      # Without the signing steps the app stays ad-hoc signed and macOS asks once to "Open Anyway".
       - name: Sign the macOS app
-        if: runner.os == 'macOS' && env.MACOS_CERT_P12 != ''
+        if: env.MAC_SIGNING == 'true'
+        env:
+          MACOS_CERT_P12_BASE64: ${{ secrets.MACOS_CERT_P12_BASE64 }}  # "Developer ID Application" .p12, base64
+          MACOS_CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}  # for the throwaway keychain on the runner
         run: |
           keychain="$RUNNER_TEMP/signing.keychain-db"
-          security create-keychain -p "" "$keychain"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$keychain"
           security set-keychain-settings -lut 3600 "$keychain"
-          security unlock-keychain -p "" "$keychain"
-          echo "$MACOS_CERT_P12" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$keychain"
+          echo "$MACOS_CERT_P12_BASE64" | base64 --decode > "$RUNNER_TEMP/cert.p12"
           security import "$RUNNER_TEMP/cert.p12" -k "$keychain" -P "$MACOS_CERT_PASSWORD" -T /usr/bin/codesign
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "" "$keychain"
+          rm -f "$RUNNER_TEMP/cert.p12"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$keychain" >/dev/null
           security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
+          # The signing identity comes from the certificate itself (its SHA-1 fingerprint).
+          identity=$(security find-identity -v -p codesigning "$keychain" | awk '/Developer ID Application/ {print $2; exit}')
+          test -n "$identity" || { echo "No Developer ID Application certificate in MACOS_CERT_P12_BASE64"; exit 1; }
+          echo "MAC_IDENTITY=$identity" >> "$GITHUB_ENV"
           codesign --force --deep --options runtime --timestamp \
-            --entitlements packaging/macos/entitlements.plist -s "$MACOS_SIGN_IDENTITY" dist/Ratica.app
+            --entitlements packaging/macos/entitlements.plist -s "$identity" dist/Ratica.app
           codesign --verify --deep --strict --verbose=2 dist/Ratica.app
       - name: macOS disk image
         if: runner.os == 'macOS'
@@ -83,10 +90,14 @@ jobs:
           test -d /tmp/ratica-dmg/Ratica.app && test -L /tmp/ratica-dmg/Applications
           hdiutil detach /tmp/ratica-dmg
       - name: Notarize the macOS disk image
-        if: runner.os == 'macOS' && env.MACOS_CERT_P12 != ''
+        if: env.MAC_SIGNING == 'true'
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}  # app-specific password, not the account's
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           dmg_file="dist/Ratica-${{ steps.version.outputs.version }}-macOS-AppleSilicon.dmg"
-          codesign --force --timestamp -s "$MACOS_SIGN_IDENTITY" "$dmg_file"
+          codesign --force --timestamp -s "$MAC_IDENTITY" "$dmg_file"
           xcrun notarytool submit "$dmg_file" --apple-id "$APPLE_ID" --password "$APPLE_APP_PASSWORD" \
             --team-id "$APPLE_TEAM_ID" --wait
           xcrun stapler staple "$dmg_file"
@@ -95,7 +106,7 @@ jobs:
         if: runner.os == 'Linux'
         run: tar -C dist -czf "dist/Ratica-${{ steps.version.outputs.version }}-Linux-x64.tar.gz" Ratica
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
         with:
           name: Ratica-${{ matrix.name }}
           path: |
@@ -108,13 +119,15 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4
         with:
           path: files
           merge-multiple: true
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65  # v2
         with:
           name: Ratica ${{ github.ref_name }} (beta)
           body_path: .github/release-body.md
