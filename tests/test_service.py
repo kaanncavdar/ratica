@@ -71,3 +71,20 @@ def test_book_estimate_uses_the_learned_speed():
 def test_estimate_skips_blocks_already_done():
     book = Book("x.pdf", "x", [Block("b0", "paragraph", "one two", 1), Block("b1", "paragraph", "three four", 1)])
     assert estimate_seconds(book, words_per_second=1.0, done_ids={"b0"}) == 2.0
+
+
+def test_downloaded_files_can_be_measured_and_removed(tmp_path, monkeypatch):
+    from ratica import paths
+    from ratica.service import downloads_size, remove_downloads
+    monkeypatch.setenv("RATICA_HOME", str(tmp_path))
+    (paths.models_dir()).mkdir(parents=True)
+    (paths.models_dir() / "model.gguf").write_bytes(b"x" * 1000)
+    (paths.engines_dir() / "b1").mkdir(parents=True)
+    (paths.engines_dir() / "b1" / "llama-server").write_bytes(b"y" * 500)
+    paths.config_path().write_text("{}", encoding="utf-8")
+    (paths.logs_dir() / "hardware.json").write_text("{}", encoding="utf-8")
+    assert downloads_size() == 1500
+    remove_downloads()
+    assert downloads_size() == 0
+    assert not paths.config_path().exists()  # setup starts over next time
+    assert (paths.logs_dir() / "hardware.json").exists()  # logs stay for bug reports

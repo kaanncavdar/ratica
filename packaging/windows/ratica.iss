@@ -39,3 +39,23 @@ Name: "{autodesktop}\Ratica"; Filename: "{app}\Ratica.exe"; Tasks: desktopicon
 
 [Run]
 Filename: "{app}\Ratica.exe"; Description: "Start Ratica"; Flags: nowait postinstall skipifsilent
+
+[Code]
+{ On uninstall, offer to delete what Ratica downloaded (engine and AI model, several GB) and its settings.
+  Translated books live next to the user's PDFs and are never touched. Silent uninstalls keep the files. }
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+var
+  DataDir: String;
+begin
+  if CurUninstallStep = usPostUninstall then
+  begin
+    DataDir := ExpandConstant('{localappdata}\Ratica');
+    if DirExists(DataDir) and not UninstallSilent then
+      if MsgBox('Also delete the translation engine and AI model that Ratica downloaded (about 5-6 GB)?' + #13#10#13#10 +
+                'Your PDFs and translated books are not affected.', mbConfirmation, MB_YESNO) = IDYES then
+      begin
+        DelTree(DataDir, True, True, True);
+        RegDeleteKeyIncludingSubkeys(HKEY_CURRENT_USER, 'Software\Ratica');
+      end;
+  end;
+end;

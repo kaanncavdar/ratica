@@ -16,7 +16,8 @@ from .detect import detect_language
 from .engine import LANGUAGES
 from .extract import extract
 from .queue import JobStore
-from .service import book_estimate, load_settings, prepare, translate_pdf, work_dir
+from .service import (book_estimate, downloads_size, load_settings, prepare, remove_downloads,
+                      translate_pdf, work_dir)
 
 ISSUES_URL = "https://github.com/kaanncavdar/ratica/issues"
 
@@ -179,6 +180,9 @@ class MainWindow(QMainWindow):
                       f'<a href="{ISSUES_URL}">report a problem</a>')
         foot.setOpenExternalLinks(True)
         outer.addWidget(foot)
+        self.storage = _muted()
+        self.storage.linkActivated.connect(lambda _: self.remove_downloads())
+        outer.addWidget(self.storage)
         outer.addStretch(1)
         self.setCentralWidget(root)
 
@@ -214,7 +218,22 @@ class MainWindow(QMainWindow):
         db = work_dir(self.pdf, self.pdf.parent, self.target()) / "job.sqlite"
         return set(JobStore(db).translations()) if db.exists() else set()
 
+    def remove_downloads(self):
+        size = downloads_size() / 1e9
+        answer = QMessageBox.question(
+            self, "Ratica", f"Delete the translation engine and AI model Ratica downloaded ({size:.1f} GB)?\n\n"
+            "Your PDFs and translated books are not affected. Ratica downloads the files again the next time "
+            "you set it up.")
+        if answer != QMessageBox.StandardButton.Yes:
+            return
+        remove_downloads()
+        self.settings = load_settings()
+        self._refresh()
+
     def _refresh(self):
+        size = 0 if self.busy or self.server_url else downloads_size()
+        self.storage.setText(f'Downloaded engine and model: {size / 1e9:.1f} GB · <a href="remove">delete</a>'
+                             if size else "")
         self.setup_box.setVisible(not self.ready())
         same = self.source() == self.target()
         can_start = self.ready() and self.book is not None and not self.busy and not same

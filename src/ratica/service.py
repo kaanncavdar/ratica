@@ -4,6 +4,7 @@
 result; ``translate_pdf`` runs one book from start, or from where it paused, to PDF + EPUB.
 """
 import json
+import shutil
 import time
 from dataclasses import asdict, dataclass, replace
 from pathlib import Path
@@ -111,6 +112,23 @@ def prepare(on_progress=None, should_stop=None, log=print) -> Settings:
         log(f"Ready: {backend}, {s.slots} paragraphs at once, {s.words_per_second:.0f} words/s")
         return s
     raise RuntimeError(f"no engine could start on this computer: {last_error}")
+
+
+def _download_dirs() -> list[Path]:
+    return [paths.engines_dir(), paths.models_dir(), paths.data_dir() / "downloads"]
+
+
+def downloads_size() -> int:
+    """Bytes taken by the downloaded engine and model."""
+    return sum(f.stat().st_size for d in _download_dirs() if d.exists() for f in d.rglob("*") if f.is_file())
+
+
+def remove_downloads():
+    """Delete the engine and model (setup downloads them again when needed). Logs are kept for bug reports;
+    translated books and their saved progress live next to the PDFs and are not touched."""
+    for d in _download_dirs():
+        shutil.rmtree(d, ignore_errors=True)
+    paths.config_path().unlink(missing_ok=True)
 
 
 def work_dir(pdf: Path, out_dir: Path, lang: str) -> Path:

@@ -95,3 +95,16 @@ def test_the_same_language_on_both_sides_cannot_start(qtbot, ready, book_pdf):
     w.set_target("en")
     assert not w.start_button.isEnabled()
     assert "different" in w.estimate.text()
+
+
+def test_downloaded_files_can_be_removed_from_the_window(qtbot, ready, monkeypatch):
+    removed = []
+    monkeypatch.setattr(gui, "downloads_size", lambda: 5_400_000_000)
+    monkeypatch.setattr(gui, "remove_downloads", lambda: removed.append(True))
+    monkeypatch.setattr(gui.QMessageBox, "question", lambda *a, **k: gui.QMessageBox.StandardButton.Yes)
+    w = gui.MainWindow()
+    qtbot.addWidget(w)
+    assert "5.4 GB" in w.storage.text()
+    monkeypatch.setattr(gui, "load_settings", lambda: None)
+    w.remove_downloads()
+    assert removed and w.setup_box.isVisibleTo(w)

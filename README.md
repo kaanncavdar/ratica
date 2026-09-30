@@ -115,6 +115,20 @@ Windows 10/11, macOS 12 or newer, and Linux. About 6 GB of free disk space for t
 
 Ratica uses **[Gemma-4-E4B-it](https://huggingface.co/google/gemma-4-E4B-it)** (Apache 2.0) through [llama.cpp](https://github.com/ggml-org/llama.cpp). It was chosen after comparing several current open models on translation quality, protection of code and URLs, speed and memory use. The benchmark scripts are in [`bench/`](bench/), so anyone can run the comparison on their own hardware.
 
+## Uninstall
+
+The engine and the AI model (5–6 GB) are kept outside the app, in Ratica's data folder. To free that space
+while keeping the app, click **delete** next to *Downloaded engine and model* at the bottom of the window.
+
+- **Windows:** uninstall Ratica from *Settings → Apps*. The uninstaller asks whether to delete the downloaded
+  engine and model too.
+- **macOS:** delete the downloaded files in the app first (or remove `~/Library/Application Support/Ratica`),
+  then move Ratica from Applications to the Trash.
+- **Linux:** delete the `Ratica` folder and `~/.local/share/ratica`.
+
+Translated books and their saved progress (`book.<language>.ratica` folders) stay next to your PDFs; delete
+them like any other file.
+
 ## Privacy
 
 Everything runs locally. Ratica only goes online to download the engine and the model on first launch. It never uploads your files or text.
