@@ -12,7 +12,7 @@ import sys
 import time
 from pathlib import Path
 
-from . import __version__, hardware, paths
+from . import __version__, hardware, lifeline, paths
 from .detect import detect_language
 from .engine import language_name
 from .extract import extract
@@ -128,6 +128,8 @@ def main(argv=None) -> int:
     adv.add_argument("--cpu", action="store_true", help="with --llama-server: do not use the GPU")
 
     a = ap.parse_args(argv)
+    if a.command in ("setup", "translate"):
+        lifeline.kill_orphans(paths.engines_dir())  # engines left behind by an earlier crash
     return {"setup": setup_command, "info": info_command, "translate": translate_command}[a.command](a)
 
 

@@ -9,6 +9,8 @@ from pathlib import Path
 import psutil
 import requests
 
+from . import lifeline
+
 LANGUAGES = {
     "en": "English", "tr": "Turkish", "az": "Azerbaijani", "de": "German", "fr": "French", "es": "Spanish",
     "it": "Italian", "pt": "Portuguese", "nl": "Dutch", "pl": "Polish", "ro": "Romanian", "cs": "Czech",
@@ -74,6 +76,7 @@ class Engine:
         flags = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
         self.proc = subprocess.Popen(server_args(self.cfg, self.port), stdout=log, stderr=subprocess.STDOUT,
                                      creationflags=flags)
+        lifeline.bind(self.proc)  # the engine ends with Ratica, even if Ratica crashes
         _lower_priority(self.proc.pid)
         deadline = time.monotonic() + self.timeout_s
         while time.monotonic() < deadline:
@@ -89,12 +92,8 @@ class Engine:
         raise TimeoutError("llama-server did not become ready")
 
     def __exit__(self, *exc):
-        if self.proc and self.proc.poll() is None:
-            self.proc.terminate()
-            try:
-                self.proc.wait(timeout=10)
-            except subprocess.TimeoutExpired:
-                self.proc.kill()
+        if self.proc:
+            lifeline.stop(self.proc)
 
 
 def system_prompt(source: str, target: str) -> str:

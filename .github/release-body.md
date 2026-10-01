@@ -1,6 +1,12 @@
 Ratica translates PDF books on your own computer and keeps the original page layout. Free, open source, offline. This is a **beta**: please [report anything that goes wrong](https://github.com/kaanncavdar/ratica/issues).
 
-## What's new in 0.1.3
+## What's new in 0.1.4
+
+- **Fix:** the translation engine could keep running after Ratica crashed or was closed during a translation,
+  holding GPU memory so that every later translation failed with an out-of-memory error. The engine now always
+  ends with Ratica, and engines left behind by an earlier version are stopped when Ratica starts.
+
+## In 0.1.3
 
 - **macOS: signed and notarized by Apple.** Ratica opens with a double click, without the "Apple could not
   verify" warning.

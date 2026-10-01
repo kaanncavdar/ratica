@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (QApplication, QComboBox, QFileDialog, QFrame, QGr
                                QLineEdit,
                                QMainWindow, QMessageBox, QProgressBar, QPushButton, QVBoxLayout, QWidget)
 
-from . import __version__, paths
+from . import __version__, lifeline, paths
 from .detect import detect_language
 from .engine import LANGUAGES
 from .extract import extract
@@ -403,11 +403,13 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, e):
         if self.busy:
-            self.pause_requested = True  # finish the paragraphs in flight; progress is already saved
+            self.pause_requested = True  # progress is already saved paragraph by paragraph
+        lifeline.stop_all()  # never leave the engine holding GPU memory
         super().closeEvent(e)
 
 
 def main():
+    lifeline.kill_orphans(paths.engines_dir())  # engines left behind by an earlier crash
     app = QApplication(sys.argv)
     app.setApplicationName("Ratica")
     app.setWindowIcon(QIcon(str(Path(__file__).parent / "assets" / "icon.png")))
