@@ -11,6 +11,7 @@
 </p>
 
 <p align="center">
+  <a href="https://ratica.kaancavdar.com"><b>Website</b></a> ·
   <a href="https://github.com/kaanncavdar/ratica/releases/latest"><b>Download</b></a> ·
   <a href="docs/media/ratica-intro.mp4">Watch the 30-second intro</a> ·
   <a href="#use">How to use</a> ·
