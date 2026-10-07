@@ -114,7 +114,7 @@ def make_translator(url: str, source: str, target: str, max_tokens: int = 4096):
         # A translation is rarely more than ~1.5x its source; the cap stops a model stuck in a loop early.
         limit = min(max_tokens, len(text) // 2 + 128)
         system = prompt
-        if context:  # a short label alone is ambiguous ("Dilim": slice? my tongue?)
+        if context:  # a short label alone is ambiguous ("Yüz": a hundred? a face?)
             system += (" The text is a short label, such as a heading, table cell or chart label, on a page that "
                        f"reads: \"{context}\" Use that only to choose the right meaning; translate only the label. "
                        f"It must fit a small space: keep it under {max(round(len(text) * 1.5), len(text) + 4)} "

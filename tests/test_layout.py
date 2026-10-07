@@ -396,5 +396,5 @@ def test_a_short_label_may_shrink_further_than_a_paragraph():
     from ratica.layout import LABEL_MIN_SCALE, MIN_SCALE, _min_scale
     from ratica.docmodel import Block
     assert LABEL_MIN_SCALE < MIN_SCALE
-    assert _min_scale(Block("b", "paragraph", "% Dilim", 1)) == LABEL_MIN_SCALE
+    assert _min_scale(Block("b", "paragraph", "% Pay", 1)) == LABEL_MIN_SCALE
     assert _min_scale(Block("b", "paragraph", "A sentence of more than three words.", 1)) == MIN_SCALE

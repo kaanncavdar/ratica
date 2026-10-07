@@ -54,13 +54,13 @@ def test_context_goes_into_the_instructions_not_the_text(fake_llama):
     url, seen = fake_llama
     translate = make_translator(url, "tr", "en")
     assert translate.accepts_context
-    translate("Dilim", context="Rankings by year. The university was in the 80% slice.")
+    translate("Yüz", context="Prices by year. A ticket cost one hundred lira.")
     system, user = (m["content"] for m in seen[0][1]["messages"])
-    assert "80% slice" in system and user == "Dilim"
+    assert "one hundred lira" in system and user == "Yüz"
 
 
 def test_a_short_label_is_asked_to_stay_about_as_short(fake_llama):
     url, seen = fake_llama
-    make_translator(url, "tr", "en")("Üni. Sayısı", context="Rankings by year.")
+    make_translator(url, "tr", "en")("Öğr. Sayısı", context="Classes by year.")
     system = seen[0][1]["messages"][0]["content"]
     assert "16 characters" in system and "abbreviat" in system  # 11 characters, with room
