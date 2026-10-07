@@ -116,7 +116,9 @@ def make_translator(url: str, source: str, target: str, max_tokens: int = 4096):
         system = prompt
         if context:  # a short label alone is ambiguous ("Dilim": slice? my tongue?)
             system += (" The text is a short label, such as a heading, table cell or chart label, on a page that "
-                       f"reads: \"{context}\" Use that only to choose the right meaning; translate only the label.")
+                       f"reads: \"{context}\" Use that only to choose the right meaning; translate only the label. "
+                       f"It must fit a small space: keep it under {max(round(len(text) * 1.5), len(text) + 4)} "
+                       "characters, abbreviating the way your language usually does only if it would be longer.")
         r = session.post(f"{url}/v1/chat/completions", json={
             "messages": [{"role": "system", "content": system}, {"role": "user", "content": text}],
             "temperature": 0, "max_tokens": limit,

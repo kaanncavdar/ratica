@@ -182,6 +182,17 @@ def _split_items(lines: list[dict]):
     return [(marker, seg) for marker, seg in segments if any(l["text"].strip() for l in seg)]
 
 
+def _split_disjoint(lines: list[dict]) -> list[list[dict]]:
+    """Lines that do not overlap side to side (a number at the right edge, a label at the left) are not
+    one paragraph."""
+    groups = [[lines[0]]] if lines else []
+    for prev, line in zip(lines, lines[1:]):
+        if line["bbox"][0] > prev["bbox"][2] or line["bbox"][2] < prev["bbox"][0]:
+            groups.append([])
+        groups[-1].append(line)
+    return groups
+
+
 def _split_indents(lines: list[dict]) -> list[list[dict]]:
     """Split a block at first-line indents: books often set paragraphs without space between them."""
     if len(lines) < 3:
@@ -339,8 +350,11 @@ def _cells(row: dict) -> list[dict]:
         bullet = len(runs) == 1 and len(runs[0]) == 1 and last["text"].strip() in BULLETS  # a list item
         # A bold subject ("OUR SCHOOL, moved up…") is part of the sentence, not a label of its own.
         sentence_goes_on = last["text"].rstrip()[-1:] in ",;:" or s["text"].lstrip()[:1].islower()
+        # A number set apart from words is a cell of its own ("Units.   1.258   1.397").
+        number_edge = bool(NO_WORDS.match(_span_text(runs[-1]).strip())) != bool(NO_WORDS.match(s["text"].strip()))
         if not bullet and (gap > LABEL_GAP * last["size"]
-                           or (gap > STYLE_GAP * last["size"] and _looks(s) != _looks(last) and not sentence_goes_on)):
+                           or (gap > STYLE_GAP * last["size"] and (number_edge or _looks(s) != _looks(last))
+                               and not sentence_goes_on)):
             runs.append([])
         runs[-1].append(s)
     if len(runs) == 1:
@@ -553,7 +567,8 @@ def _raw_blocks(doc, page_dicts, symbolic: set[str], shapes=None):
                     page_cells = _page_cells(content)
                 segments = [("", seg) for seg in _cell_segments(cells, page_cells)]
             else:
-                segments = [(marker, piece) for marker, seg in _split_items([c[0] for c in cells])
+                segments = [(marker, piece) for group in _split_disjoint([c[0] for c in cells])
+                            for marker, seg in _split_items(group)
                             for piece in (_split_indents(seg) if not marker else [seg])]
             for marker, seg in segments:
                 text = _join_lines([l["text"] for l in seg])

@@ -390,3 +390,11 @@ def test_the_first_line_indent_does_not_shrink_with_the_text():
     from ratica.layout import _css
     css = _css(Part(1, (0, 0, 100, 30), size=10, indent=40, lines=2), Block("b", "paragraph", "x", 1), scale=0.7)
     assert "text-indent: 40.00px" in css
+
+
+def test_a_short_label_may_shrink_further_than_a_paragraph():
+    from ratica.layout import LABEL_MIN_SCALE, MIN_SCALE, _min_scale
+    from ratica.docmodel import Block
+    assert LABEL_MIN_SCALE < MIN_SCALE
+    assert _min_scale(Block("b", "paragraph", "% Dilim", 1)) == LABEL_MIN_SCALE
+    assert _min_scale(Block("b", "paragraph", "A sentence of more than three words.", 1)) == MIN_SCALE

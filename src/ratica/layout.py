@@ -24,6 +24,7 @@ import pymupdf
 from .docmodel import Block, Book, Part
 
 MIN_SCALE = 0.6  # below this the text would be too small to read: keep the original instead
+LABEL_MIN_SCALE = 0.5  # a short label (table or chart) may get a little smaller than that
 ONE_LINE_SCALE = 0.85  # a one-line text shrinks down to this before it may wrap onto more lines
 EVEN_SCALE_FLOOR = 0.82  # paragraphs on a page are made equally small down to this size, not further
 INSET = 0.8  # points; keeps the removal from touching neighbouring text
@@ -216,6 +217,10 @@ def _inline_labels(items):
     return labels, items
 
 
+def _min_scale(block: Block) -> float:
+    return LABEL_MIN_SCALE if len(block.text.split()) <= 3 else MIN_SCALE
+
+
 def _plan_page(page, items: list[tuple[Part, str, Block]]) -> list[Placement]:
     obs = obstacles_on(page)
     labels, items = _inline_labels(items)
@@ -253,7 +258,7 @@ def _plan_page(page, items: list[tuple[Part, str, Block]]) -> list[Placement]:
         even = max(EVEN_SCALE_FLOOR, min(p.scale for p in members))
         for p in members:
             p.scale = min(p.scale, even)
-    return [p for p in plans if p.scale >= MIN_SCALE]
+    return [p for p in plans if p.scale >= _min_scale(p.block)]
 
 
 def write_layout_pdf(book: Book, translations: dict[str, str], path) -> Path:

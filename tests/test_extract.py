@@ -538,3 +538,17 @@ def test_an_inline_label_set_apart_by_two_blanks_keeps_its_own_style(tmp_path):
     tw.write_text(page)
     doc.save(tmp_path / "lbl.pdf")
     assert [b.text for b in extract(tmp_path / "lbl.pdf").blocks] == ["Monday", "The library opened a new reading room."]
+
+
+def test_a_number_set_apart_from_a_row_label_is_its_own_cell(tmp_path):
+    pdf = _write_rows(tmp_path / "tbl.pdf", [(100, [(72, "Units.", "hebo"), (112, "1.258", "hebo"), (160, "1.397", "hebo")]),
+                                              (114, [(72, "Count", "hebo")])])
+    blocks = extract(pdf).blocks
+    assert [b.text for b in blocks if b.translatable] == ["Units. Count"]
+    assert {b.text for b in blocks if not b.translatable} == {"1.258", "1.397"}
+
+
+def test_lines_that_do_not_overlap_side_to_side_are_not_one_paragraph(tmp_path):
+    pdf = _write_rows(tmp_path / "far.pdf", [(100, [(420, "46", "hebo")]), (108, [(72, "Slice", "hebo")])])
+    blocks = extract(pdf).blocks
+    assert [b.text for b in blocks if b.translatable] == ["Slice"]

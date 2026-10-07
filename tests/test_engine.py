@@ -57,3 +57,10 @@ def test_context_goes_into_the_instructions_not_the_text(fake_llama):
     translate("Dilim", context="Rankings by year. The university was in the 80% slice.")
     system, user = (m["content"] for m in seen[0][1]["messages"])
     assert "80% slice" in system and user == "Dilim"
+
+
+def test_a_short_label_is_asked_to_stay_about_as_short(fake_llama):
+    url, seen = fake_llama
+    make_translator(url, "tr", "en")("Üni. Sayısı", context="Rankings by year.")
+    system = seen[0][1]["messages"][0]["content"]
+    assert "16 characters" in system and "abbreviat" in system  # 11 characters, with room
