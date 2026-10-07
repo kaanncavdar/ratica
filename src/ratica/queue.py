@@ -108,14 +108,35 @@ SECTION_NUMBER = re.compile(r"^(\d{1,2}(?:\.\d{1,3})*\.?\s+)(?=[A-Z])")
 SECTION_TITLE_WORDS = 12
 
 
-def _translate_one(src: str, translate, keep_terms) -> tuple[str, str]:
+SHORT_WORDS = 3  # texts this short are translated with their page as context
+CONTEXT_CHARS = 300
+
+
+def page_contexts(book: Book) -> dict[int, str]:
+    """For each page: its title (the largest text) and its longest passage, to tell short labels what they
+    are about."""
+    by_page: dict[int, list] = {}
+    for b in book.blocks:
+        if b.translatable and b.parts:
+            by_page.setdefault(b.page, []).append(b)
+    contexts = {}
+    for page, blocks in by_page.items():
+        title = max(blocks, key=lambda b: b.parts[0].size).text
+        longest = max(blocks, key=lambda b: len(b.text)).text
+        text = title if longest == title else f"{title}. {longest}"
+        contexts[page] = text[:CONTEXT_CHARS]
+    return contexts
+
+
+def _translate_one(src: str, translate, keep_terms, context: str | None = None) -> tuple[str, str]:
     number = SECTION_NUMBER.match(src)
     if number and len(src.split()) <= SECTION_TITLE_WORDS:
-        out, status = _translate_one(src[number.end():], translate, keep_terms)
+        out, status = _translate_one(src[number.end():], translate, keep_terms, context)
         return (number.group(1) + out, status) if status == "done" else (src, status)
     tagged, spans = protect(src, keep_terms)
+    with_context = context and getattr(translate, "accepts_context", False)
     for _ in range(2):
-        out = _clean(src, translate(tagged))
+        out = _clean(src, translate(tagged, context=context) if with_context else translate(tagged))
         if is_intact(out, spans) and looks_like_translation(tagged, out):
             return unprotect(out), "done"
     return src, "kept_source"
@@ -135,6 +156,9 @@ def translate_book(book: Book, store: JobStore, translate, *, slots: int = 1, ke
     groups: dict[str, list[str]] = {}
     sources: dict[str, str] = {}
     terms: dict[str, list[str]] = {}
+    contexts: dict[str, str | None] = {}
+    page_of = {b.id: b.page for b in book.blocks}
+    page_context = page_contexts(book)
     for block_id, h, src in store.pending():
         prior = store.done_for_hash(h)
         if prior:
@@ -143,6 +167,9 @@ def translate_book(book: Book, store: JobStore, translate, *, slots: int = 1, ke
         groups.setdefault(h, []).append(block_id)
         sources[h] = src
         terms[h] = [*keep_terms, *inline_code.get(block_id, [])]
+        if h not in contexts:
+            short = len(src.split()) <= SHORT_WORDS
+            contexts[h] = page_context.get(page_of.get(block_id)) if short else None
 
     def report():
         if on_progress:
@@ -160,7 +187,7 @@ def translate_book(book: Book, store: JobStore, translate, *, slots: int = 1, ke
                     stopped = True
                     break
                 h = todo.pop(0)
-                in_flight[pool.submit(_translate_one, sources[h], translate, terms[h])] = h
+                in_flight[pool.submit(_translate_one, sources[h], translate, terms[h], contexts[h])] = h
             if not in_flight:
                 break
             fut = next(as_completed(in_flight))

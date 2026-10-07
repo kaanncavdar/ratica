@@ -25,6 +25,7 @@ class Part:
     indent: float = 0  # first-line indent, in points
     ascent: float = 0  # distance from the box top to the first baseline, in points (0 = unknown)
     justified: bool = True  # lines end flush at the right (checked for paragraphs of 3+ lines)
+    boxes: list = field(default_factory=list)  # each line's ink box; the text is erased line by line
     marker_in_box: bool = True  # False when a list marker is drawn apart from the text and stays as it is
 
 

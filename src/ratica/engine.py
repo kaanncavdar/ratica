@@ -110,15 +110,20 @@ def make_translator(url: str, source: str, target: str, max_tokens: int = 4096):
     prompt = system_prompt(source, target)
     session = requests.Session()
 
-    def translate(text: str) -> str:
+    def translate(text: str, context: str | None = None) -> str:
         # A translation is rarely more than ~1.5x its source; the cap stops a model stuck in a loop early.
         limit = min(max_tokens, len(text) // 2 + 128)
+        system = prompt
+        if context:  # a short label alone is ambiguous ("Dilim": slice? my tongue?)
+            system += (" The text is a short label, such as a heading, table cell or chart label, on a page that "
+                       f"reads: \"{context}\" Use that only to choose the right meaning; translate only the label.")
         r = session.post(f"{url}/v1/chat/completions", json={
-            "messages": [{"role": "system", "content": prompt}, {"role": "user", "content": text}],
+            "messages": [{"role": "system", "content": system}, {"role": "user", "content": text}],
             "temperature": 0, "max_tokens": limit,
             "chat_template_kwargs": {"enable_thinking": False},
         }, timeout=600)
         r.raise_for_status()
         return r.json()["choices"][0]["message"]["content"].strip()
 
+    translate.accepts_context = True
     return translate

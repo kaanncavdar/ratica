@@ -48,3 +48,12 @@ def test_translator_prompt_names_the_languages_and_keep_rule(fake_llama):
     assert body["messages"][1]["content"] == "Hello world."
     assert body["temperature"] == 0
     assert body["chat_template_kwargs"] == {"enable_thinking": False}
+
+
+def test_context_goes_into_the_instructions_not_the_text(fake_llama):
+    url, seen = fake_llama
+    translate = make_translator(url, "tr", "en")
+    assert translate.accepts_context
+    translate("Dilim", context="Rankings by year. The university was in the 80% slice.")
+    system, user = (m["content"] for m in seen[0][1]["messages"])
+    assert "80% slice" in system and user == "Dilim"

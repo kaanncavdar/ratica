@@ -174,3 +174,21 @@ def test_a_section_number_before_a_short_title_is_kept_as_it_is():
     assert _translate_one("2 How Maps Are Made", translate, ()) == ("2 Haritalar Nasıl Yapılır", "done")
     assert seen == ["How Maps Are Made"]
     assert _translate_one("2.1 Measuring the ground", lambda t: "Zemini ölçmek", ())[0] == "2.1 Zemini ölçmek"
+
+
+def test_short_labels_are_sent_with_the_page_as_context(tmp_path):
+    from ratica.docmodel import Part
+    seen = {}
+
+    def translate(text, context=None):
+        seen[text] = context
+        return text.upper()
+    translate.accepts_context = True
+    blocks = [Block("b0", "heading", "Rankings by Year", 1, parts=[Part(1, (0, 0, 10, 10), size=24)]),
+              Block("b1", "paragraph", "The university was in the 80% slice in 2019 and the 45% slice in 2027.", 1,
+                    parts=[Part(1, (0, 20, 10, 30), size=11)]),
+              Block("b2", "paragraph", "Slice", 1, parts=[Part(1, (0, 40, 10, 50), size=9)])]
+    translate_book(Book("x.pdf", "x", blocks), JobStore(tmp_path / "job.sqlite"), translate)
+    assert seen["Slice"] and "Rankings by Year" in seen["Slice"] and "80% slice" in seen["Slice"]
+    assert seen["Rankings by Year"] is not None  # three words: short too
+    assert seen["The university was in the 80% slice in 2019 and the 45% slice in 2027."] is None

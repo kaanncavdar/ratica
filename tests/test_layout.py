@@ -324,3 +324,69 @@ def test_only_labels_on_the_right_of_the_page_grow_to_the_left(tmp_path):
     label = next(b for b in book.blocks if b.text.startswith("A is"))
     out = pymupdf.open(write_layout_pdf(book, {label.id: "A, B'den k kat daha büyüktür: k ="}, tmp_path / "o.pdf"))
     assert out[0].search_for("büyüktür")[0].x0 > 88
+
+
+def _label_page(tmp_path, label_font="hebo"):
+    doc = pymupdf.open()
+    page = doc.new_page()
+    tw = pymupdf.TextWriter(page.rect)
+    tw.append((73, 100), "Mon  ", font=pymupdf.Font(label_font), fontsize=11)
+    x = 73 + pymupdf.get_text_length("Mon  ", label_font, 11)
+    tw.append((x, 100), "The library opened a new reading room for the", font=pymupdf.Font("helv"), fontsize=11)
+    tw.append((73, 114), "Faculty of Arts and its visiting students.", font=pymupdf.Font("helv"), fontsize=11)
+    tw.write_text(page)
+    doc.save(tmp_path / "label.pdf")
+    return extract(tmp_path / "label.pdf")
+
+
+def test_a_longer_label_pushes_the_first_line_of_its_text_to_the_right(tmp_path):
+    book = _label_page(tmp_path)
+    label, para = book.blocks[0], book.blocks[1]
+    assert label.text == "Mon" and para.parts[0].indent > 0
+    tr = {label.id: "Montag der Woche", para.id: "Die Bibliothek eröffnete einen neuen Lesesaal für die Fakultät."}
+    page = pymupdf.open(write_layout_pdf(book, tr, tmp_path / "out.pdf"))[0]
+    lab = page.search_for("Woche")[0]
+    first = page.search_for("Bibliothek")[0]
+    assert lab.y0 < first.y1 and first.x0 > lab.x1  # same line, after the label
+    assert "Mon " not in page.get_text()  # the old label is gone
+
+
+def test_text_wrapping_under_an_untranslated_label_does_not_erase_it(tmp_path):
+    doc = pymupdf.open()
+    page = doc.new_page()
+    tw = pymupdf.TextWriter(page.rect)
+    tw.append((73, 100), "2025-2026  ", font=pymupdf.Font("hebo"), fontsize=11)
+    x = 73 + pymupdf.get_text_length("2025-2026  ", "hebo", 11)
+    tw.append((x, 100), "Second place in the number of exchange", font=pymupdf.Font("helv"), fontsize=11)
+    tw.append((73, 114), "Students, first place by share.", font=pymupdf.Font("helv"), fontsize=11)
+    tw.write_text(page)
+    doc.save(tmp_path / "num.pdf")
+    book = extract(tmp_path / "num.pdf")
+    para = next(b for b in book.blocks if b.translatable)
+    page = pymupdf.open(write_layout_pdf(book, {para.id: "Austauschstudierende: zweiter Platz nach Anzahl, erster nach Anteil."},
+                                         tmp_path / "out.pdf"))[0]
+    text = page.get_text()
+    assert "2025-2026" in text and "Austauschstudierende" in text
+
+
+def test_a_longer_label_pushes_a_one_line_text_to_the_right(tmp_path):
+    doc = pymupdf.open()
+    page = doc.new_page()
+    tw = pymupdf.TextWriter(page.rect)
+    tw.append((73, 100), "Mar  ", font=pymupdf.Font("hebo"), fontsize=11)
+    x = 73 + pymupdf.get_text_length("Mar  ", "hebo", 11)
+    tw.append((x, 100), "Accreditation was obtained.", font=pymupdf.Font("helv"), fontsize=11)
+    tw.write_text(page)
+    doc.save(tmp_path / "one.pdf")
+    book = extract(tmp_path / "one.pdf")
+    label, para = book.blocks[0], book.blocks[1]
+    out = pymupdf.open(write_layout_pdf(book, {label.id: "Marchmonth", para.id: "Akkreditierung wurde erteilt."},
+                                        tmp_path / "out.pdf"))[0]
+    assert out.search_for("Akkreditierung")[0].x0 > out.search_for("Marchmonth")[0].x1
+
+
+def test_the_first_line_indent_does_not_shrink_with_the_text():
+    from ratica.docmodel import Block, Part
+    from ratica.layout import _css
+    css = _css(Part(1, (0, 0, 100, 30), size=10, indent=40, lines=2), Block("b", "paragraph", "x", 1), scale=0.7)
+    assert "text-indent: 40.00px" in css

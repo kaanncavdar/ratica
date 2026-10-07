@@ -34,7 +34,8 @@ FRAGMENT_MAX_CHARS = 60  # short pieces right above/below a formula (numerators,
 
 SANS_NAME = re.compile(r"sans|arial|helvet|avenir|frutiger|myriad|calibri|verdana|tahoma|segoe|roboto|lato|"
                        r"inter\b|open ?sans|futura|gill|univers|franklin|trebuchet|dejavu ?sans|source ?sans|"
-                       r"fira|ubuntu|montserrat|poppins|ibm ?plex ?sans|gothic", re.I)
+                       r"fira|ubuntu|montserrat|poppins|ibm ?plex ?sans|gothic|aptos|corbel|candara|bahnschrift|grandview|"
+                       r"seaford|tenorite|nunito|raleway|source ?han ?sans|noto ?sans|manrope|work ?sans", re.I)
 SERIF_NAME = re.compile(r"serif|times|roman|garamond|georgia|minion|palatino|caslon|cambria|baskerville|bodoni|"
                         r"book ?antiqua|century|charter|charis|utopia|libertin|lucida ?bright|cmr\d|lmroman|"
                         r"nimbus ?rom|stix|sabon|plantin|janson|bembo|constantia", re.I)
@@ -165,8 +166,11 @@ def _split_items(lines: list[dict]):
     A marker drawn as a span of its own is left out of the item's spans, so the item's box starts at
     its text and the original marker stays on the page untouched."""
     segments = [["", []]]
-    for line in lines:
+    for i, line in enumerate(lines):
         m = ITEM.match(line["text"])
+        # "36. place" right after a line that did not end its sentence is a wrapped line, not item 36.
+        if m and m.group(1)[0].isdigit() and i and not re.search(r"[.:!?)]\s*$", lines[i - 1]["text"]):
+            m = None
         if m:
             marker = m.group(1).replace(" ", "")
             spans = line["spans"]
@@ -217,14 +221,25 @@ def _style(spans, page: int, rect, text: str, lines: int, shapes=None) -> Part:
                 chars=len(text), lines=lines)
 
 
+BLANK = 0.28  # width of a blank, in font sizes (blanks are much narrower than letters)
+
+
+def _line_box(line) -> pymupdf.Rect:
+    box = _ink_rect(line["spans"][0])
+    for s in line["spans"][1:]:
+        box |= _ink_rect(s)
+    return box
+
+
 def _ink_rect(span) -> pymupdf.Rect:
-    """The span's box without leading/trailing blanks (estimated in proportion to the character count)."""
+    """The span's box without leading/trailing blanks."""
     text = span["text"]
     x0, y0, x1, y1 = span["bbox"]
     n = max(len(text), 1)
     lead, trail = len(text) - len(text.lstrip()), len(text) - len(text.rstrip())
     w = x1 - x0
-    return pymupdf.Rect(x0 + w * lead / n, y0, x1 - w * trail / n, y1)
+    blank = min(BLANK * span["size"], w / n)
+    return pymupdf.Rect(x0 + blank * lead, y0, x1 - blank * trail, y1)
 
 
 def _script_spans(lines) -> int:
@@ -266,7 +281,7 @@ def _is_vertical(line) -> bool:
 
 
 LABEL_GAP = 1.5  # a gap wider than this many font sizes separates cells of a row (table, contents, label)
-STYLE_GAP = 0.6  # a narrower gap is enough when the style changes too ("xiv ■ Contents")
+STYLE_GAP = 0.45  # a narrower gap is enough when the style changes too ("xiv ■ Contents", "Monday  The…")
 WORD_GAP = 0.15  # spans further apart than this many font sizes have a space between them
 INDENT = 0.8  # a first line indented this many font sizes starts a new paragraph
 # Text with nothing to translate: symbols, numbers, page references ("A-12", "R-1"), roman page numbers.
@@ -322,8 +337,10 @@ def _cells(row: dict) -> list[dict]:
         last = runs[-1][-1]
         gap = _ink_rect(s).x0 - _ink_rect(last).x1
         bullet = len(runs) == 1 and len(runs[0]) == 1 and last["text"].strip() in BULLETS  # a list item
+        # A bold subject ("OUR SCHOOL, moved up…") is part of the sentence, not a label of its own.
+        sentence_goes_on = last["text"].rstrip()[-1:] in ",;:" or s["text"].lstrip()[:1].islower()
         if not bullet and (gap > LABEL_GAP * last["size"]
-                           or (gap > STYLE_GAP * last["size"] and _looks(s) != _looks(last))):
+                           or (gap > STYLE_GAP * last["size"] and _looks(s) != _looks(last) and not sentence_goes_on)):
             runs.append([])
         runs[-1].append(s)
     if len(runs) == 1:
@@ -337,13 +354,17 @@ def _cells(row: dict) -> list[dict]:
     return cells
 
 
-def _wraps_into(seg: list[dict], cell: dict, cells: list[dict]) -> bool:
-    """True when ``cell`` is the rest of ``seg`` wrapped onto the next row: same style, same left edge,
-    and its first word would not have fitted on the line above."""
+def _wraps_into(seg: list[dict], cell: dict, cells: list[dict], row_x0: float | None = None) -> bool:
+    """True when ``cell`` is the rest of ``seg`` wrapped onto the next row: same style, the same left edge
+    (or, after an inline label like "Monday  The library…", the left edge of the label's row), and its
+    first word would not have fitted on the line above."""
     last = seg[-1]
-    if abs(seg[0]["bbox"][0] - cell["bbox"][0]) >= 3 or _looks(last["spans"][-1]) != _looks(cell["spans"][0]):
+    x = cell["bbox"][0]
+    aligned = abs(seg[0]["bbox"][0] - x) < 3 or (row_x0 is not None and abs(row_x0 - x) < 3)
+    if not aligned or _looks(last["spans"][-1]) != _looks(cell["spans"][0]):
         return False
-    edge = max(c["bbox"][2] for c in cells if abs(c["bbox"][0] - cell["bbox"][0]) < 3)
+    starts = [seg[0]["bbox"][0], x]
+    edge = max(c["bbox"][2] for c in cells if any(abs(c["bbox"][0] - x0) < 3 for x0 in starts))
     word = (cell["text"].split() or [""])[0]
     return last["bbox"][2] + len(word) * 0.45 * cell["spans"][0]["size"] > edge - 1
 
@@ -356,8 +377,11 @@ def _cell_segments(rows: list[list[dict]], page_cells: list[dict] | None = None)
     segments, columns = [], []
     for cells in rows:
         first = cells[0]
+        row_x0 = columns[0][0] if columns else None
+        last_seg = columns[-1][1] if columns else None
         target = next((seg for k, (x0, seg) in enumerate(columns)
-                       if (len(cells) == 1 or k > 0) and _wraps_into(seg, first, everything)), None)
+                       if (len(cells) == 1 or k > 0)
+                       and _wraps_into(seg, first, everything, row_x0 if seg is last_seg and k > 0 else None)), None)
         if target is not None:
             target.append(first)
             if len(cells) == 1:
@@ -540,6 +564,7 @@ def _raw_blocks(doc, page_dicts, symbolic: set[str], shapes=None):
                 part = _style(seg_spans, pno, rect, text, len(seg), shapes)
                 part.indent = round(max(0.0, seg[0]["bbox"][0] - min(l["bbox"][0] for l in seg)), 2)
                 part.marker_in_box = not seg[0].get("own_marker")
+                part.boxes = [tuple(round(v, 2) for v in _line_box(l)) for l in seg if l["spans"]]
                 part.ascent = round(seg_spans[0]["origin"][1] - rect.y0, 2)
                 if len(seg) >= 3:
                     rights = [l["bbox"][2] for l in seg[:-1]]

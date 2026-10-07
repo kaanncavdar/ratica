@@ -481,3 +481,60 @@ def test_two_rows_split_by_a_bar_of_dashes_are_a_formula(tmp_path):
     tw.write_text(page)
     doc.save(tmp_path / "frac.pdf")
     assert {b.kind for b in extract(tmp_path / "frac.pdf").blocks} == {"formula"}
+
+
+def test_office_sans_fonts_are_not_serif_even_when_flagged():
+    from ratica.extract import looks_serif
+    assert not looks_serif("Aptos", flags=4)
+    assert not looks_serif("ABCDEF+Aptos-Bold", flags=20)
+
+
+def test_trailing_blanks_do_not_cut_the_last_letter_off_a_box(tmp_path):
+    from ratica.extract import _ink_rect
+    doc = pymupdf.open()
+    page = doc.new_page()
+    page.insert_text((73, 100), "Monday  ", fontname="hebo", fontsize=11)
+    span = page.get_text("dict")["blocks"][0]["lines"][0]["spans"][0]
+    assert span["text"] == "Monday  "
+    assert _ink_rect(span).x1 >= 73 + pymupdf.get_text_length("Monday", "hebo", 11) - 0.5
+
+
+def test_a_line_wrapping_back_under_an_inline_label_continues_the_sentence(tmp_path):
+    pdf = _write_rows(tmp_path / "hang.pdf", [
+        (100, [(73, "Monday", "hebo"), (118, "The library opened a new reading room for the", "helv")]),
+        (114, [(73, "Faculty of Arts and its visiting students.", "helv")]),
+        (140, [(73, "Friday", "hebo"), (118, "A short event.", "helv")]),
+    ])
+    texts = [b.text for b in extract(pdf).blocks if b.translatable]
+    assert texts == ["Monday", "The library opened a new reading room for the Faculty of Arts and its visiting students.",
+                     "Friday", "A short event."]
+
+
+def test_a_bold_subject_does_not_cut_a_sentence_in_two(tmp_path):
+    doc = pymupdf.open()
+    page = doc.new_page()
+    tw = pymupdf.TextWriter(page.rect)
+    x = tw.append((72, 100), "OUR SCHOOL,", font=pymupdf.Font("hebo"), fontsize=11)[1].x
+    tw.append((x + 8, 100), "moved up one place compared with the previous year.", font=pymupdf.Font("helv"), fontsize=11)
+    tw.write_text(page)
+    doc.save(tmp_path / "subj.pdf")
+    texts = [b.text for b in extract(tmp_path / "subj.pdf").blocks if b.translatable]
+    assert texts == ["OUR SCHOOL, moved up one place compared with the previous year."]
+
+
+def test_a_wrapped_line_starting_with_a_number_is_not_a_list_item(tmp_path):
+    text = "The survey placed the library at\n36. place, its best result so far."
+    blocks = extract(write_pages(tmp_path / "num.pdf", [[(text, "helv", 11, 90)]])).blocks
+    assert [(b.kind, b.text) for b in blocks] == [("paragraph", "The survey placed the library at 36. place, its best result so far.")]
+
+
+def test_an_inline_label_set_apart_by_two_blanks_keeps_its_own_style(tmp_path):
+    doc = pymupdf.open()
+    page = doc.new_page()
+    tw = pymupdf.TextWriter(page.rect)
+    tw.append((73, 100), "Monday  ", font=pymupdf.Font("hebo"), fontsize=11)
+    x = 73 + pymupdf.get_text_length("Monday  ", "hebo", 11)
+    tw.append((x, 100), "The library opened a new reading room.", font=pymupdf.Font("helv"), fontsize=11)
+    tw.write_text(page)
+    doc.save(tmp_path / "lbl.pdf")
+    assert [b.text for b in extract(tmp_path / "lbl.pdf").blocks] == ["Monday", "The library opened a new reading room."]

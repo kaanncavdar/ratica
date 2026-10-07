@@ -16,7 +16,7 @@ that are not translated, such as code and formulas, are never touched.
 """
 import html
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 import pymupdf
@@ -63,7 +63,7 @@ def _css(part: Part, block: Block, scale: float = 1.0, align: str = "") -> str:
     return (f"* {{ font-family: {family}; font-size: {part.size * scale:.2f}px; "
             f"line-height: {_leading(part) * scale:.2f}px; color: {rgb}; "
             f"font-weight: {'bold' if part.bold else 'normal'}; font-style: {'italic' if part.italic else 'normal'}; "
-            f"text-indent: {part.indent * scale:.2f}px; text-align: {align}; margin: 0; padding: 0; }}")
+            f"text-indent: {part.indent:.2f}px; text-align: {align}; margin: 0; padding: 0; }}")
 
 
 _scratch = pymupdf.open()
@@ -181,11 +181,50 @@ class Placement:
     align: str = ""
 
 
+def _boxes(part: Part) -> list[pymupdf.Rect]:
+    return [pymupdf.Rect(b) for b in part.boxes] or [pymupdf.Rect(part.rect)]
+
+
+def _text_width(text: str, part: Part) -> float:
+    font = ("tibo" if part.bold else "tiro") if part.serif else ("hebo" if part.bold else "helv")
+    return pymupdf.get_text_length(text, fontname=font, fontsize=part.size)
+
+
+def _inline_labels(items):
+    """Pair a one-line label with the text that starts beside it on the same line and wraps under it
+    ("Monday  The library opened…"). The label is written at full size, and the text's first line starts
+    after the translated label, however long it got. Returns {label item index: rect} and new items."""
+    labels, items = {}, list(items)
+    for i, (lab, lab_text, _) in enumerate(items):
+        if lab.lines != 1:
+            continue
+        for j, (par, par_text, par_block) in enumerate(items):
+            first = _boxes(par)[0]
+            if (j == i or par.page != lab.page or abs(first.y0 - lab.rect[1]) > 3
+                    or not (lab.rect[2] <= first.x0 + 2 and first.x0 - lab.rect[2] < 4 * par.size)):
+                continue
+            width = _text_width(lab_text, lab) + 1
+            gap = max(first.x0 - lab.rect[2], 0.3 * par.size)
+            labels[i] = pymupdf.Rect(lab.rect[0], lab.rect[1], lab.rect[0] + width, lab.rect[3] + 2)
+            start = lab.rect[0] + width + gap  # where the text's first line may begin now
+            if par.indent > 0 and par.rect[0] <= lab.rect[0] + 2:  # it wraps back under the label
+                par = replace(par, indent=round(max(par.indent, start - par.rect[0]), 2))
+            elif start > par.rect[0]:  # beside the label only: move the whole box over
+                par = replace(par, rect=(round(start, 2), *par.rect[1:]))
+            items[j] = (par, par_text, par_block)
+            break
+    return labels, items
+
+
 def _plan_page(page, items: list[tuple[Part, str, Block]]) -> list[Placement]:
     obs = obstacles_on(page)
+    labels, items = _inline_labels(items)
     plans = []
-    for part, text, block in items:
+    for i, (part, text, block) in enumerate(items):
         body = html.escape(text)
+        if i in labels:  # written whole on its line; the text beside it moves over
+            plans.append(Placement(part, block, body, labels[i], 1.0))
+            continue
         own = pymupdf.Rect(part.rect) + (0, 0, 1, 2)  # a little air below: line heights differ between fonts
         css = _css(part, block)
         need = _needed_scale(body, css, own)
@@ -230,13 +269,13 @@ def write_layout_pdf(book: Book, translations: dict[str, str], path) -> Path:
     for b in book.blocks:
         if b.parts and not translated(b):
             for p in b.parts:
-                untouched[p.page].append(pymupdf.Rect(p.rect))
+                untouched[p.page].extend(_boxes(p))
 
     def overlaps_untouched(b):
         # Boxes of neighbouring lines touch by a point or two; only a real overlap counts.
         shrink = (0, 2, 0, -2)
-        return any(((pymupdf.Rect(p.rect) + shrink) & (u + shrink)).get_area() > 1
-                   for p in b.parts for u in untouched[p.page])
+        return any(((box + shrink) & (u + shrink)).get_area() > 1
+                   for p in b.parts for box in _boxes(p) for u in untouched[p.page])
 
     per_page: dict[int, list] = defaultdict(list)
     for b in book.blocks:
@@ -251,7 +290,8 @@ def write_layout_pdf(book: Book, translations: dict[str, str], path) -> Path:
         page = doc[pno - 1]
         plans = _plan_page(page, items)
         for p in plans:
-            page.add_redact_annot(pymupdf.Rect(p.part.rect) + (0, INSET, 0, -INSET), fill=False)
+            for box in _boxes(p.part):  # line by line: a label the text wraps under stays
+                page.add_redact_annot(box + (0, INSET, 0, -INSET), fill=False)
         page.apply_redactions(images=pymupdf.PDF_REDACT_IMAGE_NONE, graphics=pymupdf.PDF_REDACT_LINE_ART_NONE)
         for p in plans:
             css = _css(p.part, p.block, p.scale, p.align)
